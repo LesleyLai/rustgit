@@ -18,7 +18,7 @@ pub struct LsTreeArgs {
 }
 
 pub fn ls_tree(args: LsTreeArgs) -> anyhow::Result<()> {
-    anyhow::ensure!(args.name_only, "Only implement name_only for now");
+    anyhow::ensure!(args.name_only, "Only implemented name_only for now");
 
     let path = object_path_from_hash(
         &Sha1Hash::from_unvalidated_hex_string(&args.tree_ish)?.to_hex_string(),
