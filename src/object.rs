@@ -1,5 +1,33 @@
+// Utilities related to Git Object
+
 use crate::sha1hash::{Sha1Hash, Sha1HashHexString};
 use anyhow::Context;
+
+#[allow(dead_code)]
+#[derive(Eq, PartialEq, Copy, Clone)]
+pub enum ObjectType {
+    Blob,
+    Tree,
+    Commit,
+}
+
+pub struct Object {
+    // The byte string that represent a git object
+    pub data: Vec<u8>,
+}
+
+impl Object {
+    // Given the type of object and content of a file, create a valid git object
+    pub fn new(typ: ObjectType, content: &[u8]) -> Self {
+        if typ != ObjectType::Blob {
+            unimplemented!("only blobs are supported for now!");
+        }
+
+        let mut data = format!("blob {}\0", content.len()).into_bytes();
+        data.extend_from_slice(&content);
+        Self { data }
+    }
+}
 
 // Given an SHA1 hash of a git object, return back its path in .git/objects
 pub fn object_path_from_hash(object_hash: &Sha1HashHexString) -> std::path::PathBuf {

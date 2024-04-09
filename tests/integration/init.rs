@@ -3,20 +3,19 @@ use predicates::prelude::*;
 use std::fs;
 use std::process::Command;
 
-use crate::common::{clear_dir, TEST_DIR};
+use crate::common::{clear_dir, git_command, TEST_DIR};
 
 #[test]
 fn init() -> anyhow::Result<()> {
     let working_dir = TEST_DIR.join("init");
     clear_dir(&working_dir)?;
 
-    let mut cmd = Command::cargo_bin("rustgit")?;
-    let cmd = cmd.args(["init"]).current_dir(&working_dir);
-
-    // First call to git init should succeed
     let git_dir = working_dir.join(".git");
 
-    cmd.assert()
+    let mut cmd: Command = git_command();
+    cmd.args(["init"])
+        .current_dir(&working_dir)
+        .assert()
         .success()
         .stdout(predicate::str::starts_with(format!(
             "Initialized empty Git repository in {}",

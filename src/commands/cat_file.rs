@@ -1,4 +1,4 @@
-use crate::git_object_util::object_path_from_hash;
+use crate::object::object_path_from_hash;
 use crate::parse_util::parse_usize;
 use crate::sha1hash::Sha1Hash;
 use anyhow::Context;

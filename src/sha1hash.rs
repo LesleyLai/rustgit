@@ -32,9 +32,9 @@ fn byte2hex(byte: u8) -> (u8, u8) {
 }
 
 impl Sha1Hash {
-    pub fn from_contents(contents: &[u8]) -> Self {
+    pub fn from_data(data: &[u8]) -> Self {
         let mut hasher = sha1::Sha1::new();
-        hasher.update(contents);
+        hasher.update(data);
         let output = hasher.finalize();
 
         Sha1Hash(
@@ -69,6 +69,7 @@ impl Sha1Hash {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::object::{Object, ObjectType};
 
     #[test]
     fn from_unvalidated_hex_string() {
@@ -82,5 +83,15 @@ mod tests {
                 .to_string(),
             HASH
         );
+    }
+
+    #[test]
+    fn from_data() {
+        let blob = Object::new(ObjectType::Blob, "hello world\n".as_bytes());
+
+        assert_eq!(
+            &Sha1Hash::from_data(&blob.data).to_string(),
+            "3b18e512dba79e4c8300dd08aeb37f8e728b8dad"
+        )
     }
 }

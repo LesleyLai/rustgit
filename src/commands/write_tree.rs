@@ -1,4 +1,4 @@
-use crate::git_object_util::write_object;
+use crate::object::write_object;
 use crate::sha1hash::Sha1Hash;
 
 use anyhow::Context;
@@ -30,9 +30,9 @@ fn write_tree_impl(path: &std::path::Path) -> anyhow::Result<Sha1Hash> {
             // create a blob object
             let body = fs::read_to_string(child_path.to_str().unwrap())?;
             let header = format!("blob {}\0", body.len());
-            let blob_content = header + &body;
-            let object_hash = Sha1Hash::from_contents(blob_content.as_bytes());
-            write_object(blob_content.as_bytes(), &object_hash)?;
+            let blob_data = header + &body;
+            let object_hash = Sha1Hash::from_data(blob_data.as_bytes());
+            write_object(blob_data.as_bytes(), &object_hash)?;
 
             object_hash
         } else if child_path.is_dir() {
@@ -58,7 +58,7 @@ fn write_tree_impl(path: &std::path::Path) -> anyhow::Result<Sha1Hash> {
     write!(content, "tree {}\0", body.len()).unwrap(); // header
     content.extend_from_slice(&body);
 
-    let hash = Sha1Hash::from_contents(&content);
+    let hash = Sha1Hash::from_data(&content);
     write_object(&content, &hash).context("failed to write tree object to disk")?;
     Ok(hash)
 }

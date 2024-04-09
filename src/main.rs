@@ -1,5 +1,5 @@
 mod commands;
-mod git_object_util;
+mod object;
 mod parse_util;
 mod sha1hash;
 
