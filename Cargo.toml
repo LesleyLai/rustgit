@@ -1,0 +1,15 @@
+[package]
+name = "rustgit"
+version = "0.1.0"
+edition = "2021"
+authors = ["Lesley Lai <lesley@lesleylai.info>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.0.32", features = ["derive"] } # creating a cli
+flate2 = "1.0"                                       # gzip compression
+sha1 = "0.10.1"                                      # hashing
+hex = "0.4.3"                                        # working with hash output
+anyhow = "1.0.59"                                    # error handling
+thiserror = "1.0.32"                                 # error handling
