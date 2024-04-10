@@ -1,4 +1,4 @@
-use crate::common::{clear_dir, git_command_real, git_command_rust, TEST_DIR};
+use crate::common::{git_command_real, git_command_rust, git_init, test_path};
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::str::from_utf8;
@@ -9,11 +9,9 @@ fn pretty_print_blob() -> anyhow::Result<()> {
     let file_content = "hello world";
     let file_name = "file.txt";
 
-    let working_dir = TEST_DIR.join("cat-file");
-    clear_dir(&working_dir).unwrap();
+    let working_dir = test_path!();
 
-    // git init
-    git_command_real(&working_dir).args(["init"]).output()?;
+    git_init(&working_dir)?;
 
     // write content to file.txt
     let file_path = working_dir.join("file.txt");

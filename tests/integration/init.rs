@@ -2,12 +2,11 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::fs;
 
-use crate::common::{clear_dir, git_command_rust, TEST_DIR};
+use crate::common::{git_command_rust, test_path};
 
 #[test]
 fn init() -> anyhow::Result<()> {
-    let working_dir = TEST_DIR.join("init");
-    clear_dir(&working_dir)?;
+    let working_dir = test_path!();
 
     let git_dir = working_dir.join(".git");
 

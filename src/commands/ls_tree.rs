@@ -3,10 +3,12 @@ use clap::Args;
 use flate2::read::ZlibDecoder;
 use rustgit_plumbing::hash::Sha1Hash;
 use rustgit_plumbing::object::object_path_from_hash;
+use rustgit_plumbing::utils::remove_last;
 use std::{
     fs::File,
     io::{prelude::*, BufReader},
 };
+
 #[derive(Args, Debug)]
 pub struct LsTreeArgs {
     /// List only filenames (instead of the "long" output), one per line.
@@ -44,7 +46,7 @@ pub fn ls_tree(args: LsTreeArgs) -> anyhow::Result<()> {
         if n == 0 {
             break;
         }
-        let output_str = std::str::from_utf8(&output[..output.len() - 1]).unwrap();
+        let output_str = std::str::from_utf8(remove_last(&output)).unwrap();
         if output_str.is_empty() {
             break;
         }

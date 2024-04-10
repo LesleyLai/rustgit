@@ -1,35 +1,67 @@
+use anyhow::Context;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Output;
 
-use anyhow::Context;
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 
 lazy_static! {
-    pub static ref TEST_DIR: PathBuf = {
+     pub(crate) static ref TEST_DIR: PathBuf = {
         let temp_dir = std::env::temp_dir();
         let dir = temp_dir.join("rustgit_tests");
 
-        fs::create_dir_all(&dir).expect("cannot create a temporary directory for test!");
+        let _ = fs::remove_dir_all(&dir); // supress error
+        fs::create_dir(&dir).unwrap();
         dir
     };
 }
 
-pub fn clear_dir(path: &Path) -> anyhow::Result<()> {
-    let _ = fs::remove_dir_all(&path); // supress error
-    fs::create_dir(&path).context(format!("failed to clear {}", path.display()))
+// Copied from stdext
+macro_rules! function_name {
+    () => {{
+        // Okay, this is ugly, I get it. However, this is the best we can get on a stable rust.
+        fn f() {}
+        fn type_name_of<T>(_: T) -> &'static str {
+            std::any::type_name::<T>()
+        }
+        let name = type_name_of(f);
+        // `3` is the length of the `::f`.
+        &name[..name.len() - 3]
+    }};
 }
+pub(crate) use function_name;
+
+/// Generate a unique temporary working directory for each path
+macro_rules! test_path {
+    () => {{
+        use crate::common::{function_name, TEST_DIR};
+
+        let directory = function_name!()[13..].replace("::", "_");
+        let path = TEST_DIR.join(directory);
+        std::fs::create_dir(&path).unwrap();
+        path
+    }};
+}
+pub(crate) use test_path;
 
 /// The real git command
-pub fn git_command_real(working_dir: &Path) -> std::process::Command {
+pub(crate) fn git_command_real(working_dir: &Path) -> std::process::Command {
     let mut command = std::process::Command::new("git");
     command.current_dir(&working_dir);
     command
 }
 
 /// rustgit under test
-pub fn git_command_rust(working_dir: &Path) -> std::process::Command {
+pub(crate) fn git_command_rust(working_dir: &Path) -> std::process::Command {
     let mut command = std::process::Command::cargo_bin("rustgit").expect("Cannot find executable");
     command.current_dir(&working_dir);
     command
+}
+
+pub(crate) fn git_init(working_dir: &Path) -> anyhow::Result<Output> {
+    git_command_real(&working_dir)
+        .args(["init"])
+        .output()
+        .context("Failed to call git init")
 }

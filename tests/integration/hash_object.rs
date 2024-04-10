@@ -1,30 +1,43 @@
-use crate::common::{clear_dir, git_command_real, git_command_rust, TEST_DIR};
+use crate::common::{git_command_real, git_command_rust, git_init, test_path};
+use rustgit_plumbing::utils::remove_last;
+
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::str::from_utf8;
+use std::{
+    io::{Read, Write},
+    process::Stdio,
+    str::from_utf8,
+};
+
+#[test]
+fn no_required_arg() -> anyhow::Result<()> {
+    let working_dir = test_path!();
+
+    git_init(&working_dir)?;
+
+    git_command_rust(&working_dir)
+        .args(["hash-object"])
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains("required arguments were not provided"));
+
+    Ok(())
+}
 
 // hash-object -w <blob>
 #[test]
-fn hash_object_blob() -> anyhow::Result<()> {
+fn write_blob() -> anyhow::Result<()> {
     let file_content = "hello world";
     let file_name = "file.txt";
+    let expected_hash = b"95d09f2b10159347eece71399a7e2e907ea3df4f";
 
-    let working_dir = TEST_DIR.join("hash-object");
-    clear_dir(&working_dir).unwrap();
+    let working_dir = test_path!();
 
-    // git init
-    git_command_real(&working_dir).args(["init"]).output()?;
+    git_init(&working_dir)?;
 
     // write content to file.txt
     let file_path = working_dir.join("file.txt");
     std::fs::write(&file_path, file_content)?;
-
-    // get expected hash from real git
-    let real_hash_object_cmd = git_command_real(&working_dir)
-        .args(["hash-object", file_name])
-        .assert()
-        .success();
-    let expected_hash = &real_hash_object_cmd.get_output().stdout;
 
     // rustgit hash-object -w
     let hash_object_cmd = git_command_rust(&working_dir)
@@ -32,7 +45,7 @@ fn hash_object_blob() -> anyhow::Result<()> {
         .assert()
         .success();
     let hash = &hash_object_cmd.get_output().stdout;
-    assert_eq!(hash, expected_hash);
+    assert_eq!(expected_hash, &remove_last(&hash));
 
     // check file content with git cat-file -p
     git_command_real(&working_dir)
@@ -40,6 +53,36 @@ fn hash_object_blob() -> anyhow::Result<()> {
         .assert()
         .success()
         .stdout(predicate::eq(file_content));
+
+    Ok(())
+}
+
+// hash-object --stdin <blob>
+#[test]
+fn stdin() -> anyhow::Result<()> {
+    let content = "hello world";
+    let expected_hash = b"95d09f2b10159347eece71399a7e2e907ea3df4f";
+
+    let working_dir = test_path!();
+
+    git_init(&working_dir)?;
+
+    // rustgit hash-object
+    let mut child_process = git_command_rust(&working_dir)
+        .args(["hash-object", "--stdin"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()?;
+    child_process
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(content.as_bytes())?;
+
+    assert!(child_process.wait()?.success());
+    let mut hash = String::new();
+    child_process.stdout.unwrap().read_to_string(&mut hash)?;
+    assert_eq!(&remove_last(hash.as_bytes()), expected_hash);
 
     Ok(())
 }

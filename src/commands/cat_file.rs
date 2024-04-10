@@ -4,6 +4,7 @@ use clap::Args;
 use flate2::read::ZlibDecoder;
 use rustgit_plumbing::hash::Sha1Hash;
 use rustgit_plumbing::object::object_path_from_hash;
+use rustgit_plumbing::utils::remove_last;
 use std::{
     fs::File,
     io::{prelude::*, BufReader, Write},
@@ -14,7 +15,6 @@ pub struct CatFileArgs {
     /// Pretty-print the contents of <object> based on its type
     #[clap(short = 'p')]
     pretty_print: bool,
-
     object_hash: String,
 }
 
@@ -40,7 +40,7 @@ pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
         .iter()
         .position(|&c| c == b' ')
         .context("header has space separator")?;
-    let (typ, mut size) = output[..(output.len() - 1)].split_at(separate_point);
+    let (typ, mut size) = remove_last(&output).split_at(separate_point);
     if typ != b"blob" {
         anyhow::bail!(".git/object file header does not start with a known type");
     }
