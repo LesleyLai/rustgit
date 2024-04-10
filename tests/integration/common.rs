@@ -20,6 +20,16 @@ pub fn clear_dir(path: &Path) -> anyhow::Result<()> {
     fs::create_dir(&path).context(format!("failed to clear {}", path.display()))
 }
 
-pub fn git_command() -> std::process::Command {
-    std::process::Command::cargo_bin("rustgit").expect("Cannot file executable")
+/// The real git command
+pub fn git_command_real(working_dir: &Path) -> std::process::Command {
+    let mut command = std::process::Command::new("git");
+    command.current_dir(&working_dir);
+    command
+}
+
+/// rustgit under test
+pub fn git_command_rust(working_dir: &Path) -> std::process::Command {
+    let mut command = std::process::Command::cargo_bin("rustgit").expect("Cannot find executable");
+    command.current_dir(&working_dir);
+    command
 }

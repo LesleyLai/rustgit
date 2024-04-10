@@ -1,9 +1,8 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::fs;
-use std::process::Command;
 
-use crate::common::{clear_dir, git_command, TEST_DIR};
+use crate::common::{clear_dir, git_command_rust, TEST_DIR};
 
 #[test]
 fn init() -> anyhow::Result<()> {
@@ -12,9 +11,8 @@ fn init() -> anyhow::Result<()> {
 
     let git_dir = working_dir.join(".git");
 
-    let mut cmd: Command = git_command();
-    cmd.args(["init"])
-        .current_dir(&working_dir)
+    git_command_rust(&working_dir)
+        .args(["init"])
         .assert()
         .success()
         .stdout(predicate::str::starts_with(format!(
