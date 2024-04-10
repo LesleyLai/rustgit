@@ -16,6 +16,7 @@ pub struct LsTreeArgs {
     name_only: bool,
 
     /// Id of a tree-ish
+    #[clap(name = "tree-ish")]
     tree_ish: String,
 }
 

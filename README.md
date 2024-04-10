@@ -14,10 +14,11 @@ The objective is to develop something that can seamlessly substitute normal Git 
 
 **Plumbing Commands**
 
-| Command       | Note                         |
-|---------------|------------------------------|
-| `cat-file`    | only supports `-p` right now |
-| `hash-object` |                              |
+| Command       | Note                                  |
+|---------------|---------------------------------------|
+| `cat-file`    | currently only supports `-p`          |
+| `hash-object` |                                       |
+| `ls-tree`     | currently only supports `--name-only` |
 
 ## References
 
