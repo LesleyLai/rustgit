@@ -1,9 +1,9 @@
-use crate::object::object_path_from_hash;
 use crate::parse_util::parse_usize;
-use crate::sha1hash::Sha1Hash;
 use anyhow::Context;
 use clap::Args;
 use flate2::read::ZlibDecoder;
+use rustgit_plumbing::hash::Sha1Hash;
+use rustgit_plumbing::object::object_path_from_hash;
 use std::{
     fs::File,
     io::{prelude::*, BufReader, Write},

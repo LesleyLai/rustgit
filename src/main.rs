@@ -1,7 +1,5 @@
 mod commands;
-mod object;
 mod parse_util;
-mod sha1hash;
 
 use crate::commands::*;
 

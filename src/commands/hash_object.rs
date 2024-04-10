@@ -1,6 +1,6 @@
-use crate::object::{write_object, Object, ObjectType};
-use crate::sha1hash::Sha1Hash;
 use clap::Args;
+use rustgit_plumbing::hash::Sha1Hash;
+use rustgit_plumbing::object::{write_object, Object, ObjectType};
 use std::fs;
 
 #[derive(Args, Debug)]

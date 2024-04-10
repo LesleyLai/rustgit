@@ -1,8 +1,8 @@
 use anyhow::Context;
 use clap::Args;
 
-use crate::object::write_object;
-use crate::sha1hash::Sha1Hash;
+use rustgit_plumbing::hash::Sha1Hash;
+use rustgit_plumbing::object::write_object;
 
 #[derive(Args, Debug)]
 pub struct CommitTreeArgs {

@@ -434,12 +434,21 @@ dependencies = [
  "assert_cmd",
  "clap",
  "flate2",
- "hex",
  "lazy_static",
  "predicates",
- "sha1",
+ "rustgit_plumbing",
  "tempdir",
  "thiserror",
+]
+
+[[package]]
+name = "rustgit_plumbing"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "flate2",
+ "hex",
+ "sha1",
 ]
 
 [[package]]

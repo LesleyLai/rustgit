@@ -9,13 +9,17 @@ authors = ["Lesley Lai <lesley@lesleylai.info>"]
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] } # creating a cli
 flate2 = "1.0"                                       # gzip compression
-sha1 = "0.10.1"                                      # hashing
-hex = "0.4.3"                                        # working with hash output
 anyhow = "1.0.81"                                    # error handling
 thiserror = "1.0.58"                                 # error handling
+rustgit_plumbing = { path = "./plumbing" }
 
 [dev-dependencies]
 assert_cmd = "2.0.14"
 tempdir = "0.3.7"
 predicates = "3.1.0"
 lazy_static = "1.4.0"
+
+[workspace]
+members = [
+    "plumbing",
+]

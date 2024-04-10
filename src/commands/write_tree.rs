@@ -1,5 +1,5 @@
-use crate::object::write_object;
-use crate::sha1hash::Sha1Hash;
+use rustgit_plumbing::hash::Sha1Hash;
+use rustgit_plumbing::object::write_object;
 
 use anyhow::Context;
 use io::prelude::*;

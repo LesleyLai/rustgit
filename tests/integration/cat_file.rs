@@ -9,7 +9,8 @@ fn cat_file() -> anyhow::Result<()> {
         .current_dir(&working_dir)
         .output()?;
 
-    // TODO: continue working on this after refactoring
+    let file_path = working_dir.join("file.txt");
+    std::fs::write(&file_path, "hello world")?;
 
     Ok(())
 }

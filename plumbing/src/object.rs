@@ -1,6 +1,6 @@
 // Utilities related to Git Object
 
-use crate::sha1hash::{Sha1Hash, Sha1HashHexString};
+use crate::hash::{Sha1Hash, Sha1HashHexString};
 use anyhow::Context;
 
 #[allow(dead_code)]
