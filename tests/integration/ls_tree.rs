@@ -1,24 +1,14 @@
 use crate::common::{git_command_real, git_command_rust, git_init, TEST_DIR};
 
-use anyhow::Context;
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 use predicates::prelude::*;
+use rustgit_plumbing::utils::remove_last;
 use std::{
     fs,
     path::{Path, PathBuf},
     str::from_utf8,
 };
-
-fn get_head_tree(working_dir: &Path) -> anyhow::Result<[u8; 40]> {
-    let output = git_command_real(&working_dir)
-        .args(["cat-file", "-p", "HEAD"])
-        .output()?;
-    let stdout = output.stdout;
-    stdout[5..45]
-        .try_into()
-        .context("Failed to extract tree hash from HEAD")
-}
 
 lazy_static! {
     static ref LS_TREE_SETUP_DATA: (PathBuf, [u8; 40]) = {
@@ -47,12 +37,13 @@ lazy_static! {
             .assert()
             .success();
 
-        git_command_real(&working_dir)
-            .args(["commit", "-m", "\"foo\""])
-            .assert()
-            .success();
+        let tree_hash = git_command_real(&working_dir)
+            .args(["write-tree"])
+            .output()
+            .unwrap()
+            .stdout;
 
-        let tree_hash = get_head_tree(&working_dir).unwrap();
+        let tree_hash: [u8; 40] = remove_last(&tree_hash).try_into().unwrap();
 
         (working_dir, tree_hash)
     };

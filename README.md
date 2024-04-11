@@ -8,9 +8,9 @@ The objective is to develop something that can seamlessly substitute normal Git 
 
 **Porcelain Commands**
 
-| Command | Note                |
-|---------|---------------------|
-| `init`  | No reinitialization |
+| Command | Note                            |
+|---------|---------------------------------|
+| `init`  | No support for reinitialization |
 
 **Plumbing Commands**
 
