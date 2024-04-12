@@ -1,6 +1,4 @@
-use crate::common::{
-    git_command_real, git_command_rust, git_init, git_stage_current_dir, populate_folder, TEST_DIR,
-};
+use crate::common::{git, populate_folder, rustgit, TEST_DIR};
 
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
@@ -16,18 +14,13 @@ lazy_static! {
         let working_dir = TEST_DIR.join("ls-tree");
         fs::create_dir(&working_dir).unwrap();
 
-        git_init(&working_dir).unwrap();
+        git::init(&working_dir).unwrap();
 
         populate_folder(&working_dir);
 
-        git_stage_current_dir(&working_dir).unwrap();
+        git::stage_current_dir(&working_dir).unwrap();
 
-        let tree_hash = git_command_real(&working_dir)
-            .args(["write-tree"])
-            .output()
-            .unwrap()
-            .stdout;
-        let tree_hash = Sha1HashHexString::from_u8_slice(&tree_hash).unwrap();
+        let tree_hash = git::new_command(&working_dir).write_tree().unwrap();
 
         (working_dir, tree_hash)
     };
@@ -43,7 +36,7 @@ fn name_only() -> anyhow::Result<()> {
 dir2
 file1.txt";
 
-    git_command_rust(&working_dir)
+    rustgit::new_command(&working_dir)
         .args(["ls-tree", "--name-only", &tree_hash])
         .assert()
         .success()

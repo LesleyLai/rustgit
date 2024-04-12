@@ -1,12 +1,11 @@
-use crate::common::{
-    git_command_real, git_command_rust, git_init, git_stage_current_dir, populate_folder, test_path,
-};
+use crate::common::git::stage_current_dir;
+use crate::common::{git, populate_folder, rustgit, test_path};
 use assert_cmd::prelude::*;
 use rustgit_plumbing::hash::Sha1HashHexString;
 use std::{fs, path::Path};
 
 fn head_sha(working_dir: &Path) -> anyhow::Result<Sha1HashHexString> {
-    let hash = git_command_real(working_dir)
+    let hash = git::new_command(working_dir)
         .args(["rev-parse", "HEAD"])
         .output()?
         .stdout;
@@ -18,14 +17,14 @@ fn head_sha(working_dir: &Path) -> anyhow::Result<Sha1HashHexString> {
 fn with_parent() -> anyhow::Result<()> {
     let working_dir = test_path!();
 
-    git_init(&working_dir)?;
+    git::init(&working_dir)?;
 
     populate_folder(&working_dir);
 
-    git_stage_current_dir(&working_dir)?;
+    stage_current_dir(&working_dir)?;
 
     // Initial commit
-    git_command_real(&working_dir)
+    git::new_command(&working_dir)
         .args(["commit", "-m", "\"initial commit\""])
         .assert()
         .success();
@@ -35,16 +34,11 @@ fn with_parent() -> anyhow::Result<()> {
 
     // create another file
     fs::write(&working_dir.join("another file.txt"), "another file").unwrap();
-    git_stage_current_dir(&working_dir)?;
+    stage_current_dir(&working_dir)?;
 
-    let tree_hash = git_command_real(&working_dir)
-        .args(["write-tree"])
-        .output()
-        .unwrap()
-        .stdout;
-    let tree_hash = Sha1HashHexString::from_u8_slice(&tree_hash)?;
+    let tree_hash = git::new_command(&working_dir).write_tree()?;
 
-    let output = git_command_rust(&working_dir)
+    let output = rustgit::new_command(&working_dir)
         .args([
             "commit-tree",
             &tree_hash,
@@ -60,7 +54,7 @@ fn with_parent() -> anyhow::Result<()> {
     let commit_hash = Sha1HashHexString::from_u8_slice(&output.stdout)?;
 
     // git cat-file commit <sha>
-    let output = git_command_real(&working_dir)
+    let output = git::new_command(&working_dir)
         .args(["cat-file", "commit", &commit_hash])
         .output()?;
     assert!(output.status.success());

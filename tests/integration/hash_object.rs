@@ -1,4 +1,4 @@
-use crate::common::{git_command_real, git_command_rust, git_init, test_path};
+use crate::common::{git, rustgit, test_path};
 
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
@@ -12,9 +12,9 @@ use std::{
 fn no_required_arg() -> anyhow::Result<()> {
     let working_dir = test_path!();
 
-    git_init(&working_dir)?;
+    git::init(&working_dir)?;
 
-    git_command_rust(&working_dir)
+    rustgit::new_command(&working_dir)
         .args(["hash-object"])
         .assert()
         .failure()
@@ -34,14 +34,14 @@ fn write_blob() -> anyhow::Result<()> {
 
     let working_dir = test_path!();
 
-    git_init(&working_dir)?;
+    git::init(&working_dir)?;
 
     // write content to file.txt
     let file_path = working_dir.join("file.txt");
     std::fs::write(&file_path, file_content)?;
 
     // rustgit hash-object -w
-    let hash_object_cmd = git_command_rust(&working_dir)
+    let hash_object_cmd = rustgit::new_command(&working_dir)
         .args(["hash-object", "-w", file_name])
         .assert()
         .success();
@@ -49,7 +49,7 @@ fn write_blob() -> anyhow::Result<()> {
     assert_eq!(expected_hash, &hash.0);
 
     // check file content with git cat-file -p
-    git_command_real(&working_dir)
+    git::new_command(&working_dir)
         .args(["cat-file", "-p", &hash])
         .assert()
         .success()
@@ -66,10 +66,10 @@ fn stdin() -> anyhow::Result<()> {
 
     let working_dir = test_path!();
 
-    git_init(&working_dir)?;
+    git::init(&working_dir)?;
 
     // rustgit hash-object
-    let mut child_process = git_command_rust(&working_dir)
+    let mut child_process = rustgit::new_command(&working_dir)
         .args(["hash-object", "--stdin"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

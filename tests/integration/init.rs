@@ -2,7 +2,7 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::fs;
 
-use crate::common::{git_command_rust, test_path};
+use crate::common::{rustgit, test_path};
 
 #[test]
 fn init() -> anyhow::Result<()> {
@@ -10,7 +10,7 @@ fn init() -> anyhow::Result<()> {
 
     let git_dir = working_dir.join(".git");
 
-    git_command_rust(&working_dir)
+    rustgit::new_command(&working_dir)
         .args(["init"])
         .assert()
         .success()
