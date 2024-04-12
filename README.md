@@ -8,17 +8,18 @@ The objective is to develop something that can seamlessly substitute normal Git 
 
 **Porcelain Commands**
 
-| Command | Note                            |
+| Command | Note & Limitations              |
 |---------|---------------------------------|
 | `init`  | No support for reinitialization |
 
 **Plumbing Commands**
 
-| Command       | Note                                  |
-|---------------|---------------------------------------|
-| `cat-file`    | currently only supports `-p`          |
-| `hash-object` |                                       |
-| `ls-tree`     | currently only supports `--name-only` |
+| Command       | Note & Limitations                                                                |
+|---------------|-----------------------------------------------------------------------------------|
+| `cat-file`    | currently only supports `-p`                                                      |
+| `hash-object` |                                                                                   |
+| `ls-tree`     | currently only supports `--name-only`                                             |
+| `write-tree`  | currently just write the whole folder without consider what's in the stage buffer |
 
 ## References
 

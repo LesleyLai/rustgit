@@ -1,4 +1,6 @@
-use crate::common::{git_command_real, git_command_rust, git_init, TEST_DIR};
+use crate::common::{
+    git_command_real, git_command_rust, git_init, git_stage_current_dir, TEST_DIR,
+};
 
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
@@ -10,6 +12,23 @@ use std::{
     str::from_utf8,
 };
 
+fn setup_test_folder(dir: &Path) {
+    let file1 = dir.join("file1.txt");
+    fs::write(&file1, "hello").unwrap();
+
+    let dir1 = dir.join("dir1");
+    fs::create_dir(&dir1).unwrap();
+    let file2 = dir1.join("file_in_dir1_1");
+    let file3 = dir1.join("file_in_dir1_2");
+    fs::write(&file2, "file_in_dir1").unwrap();
+    fs::write(&file3, "file_in_dir1 2").unwrap();
+
+    let dir2 = dir.join("dir2");
+    fs::create_dir(&dir2).unwrap();
+    let file4 = dir2.join("file_in_dir2_1");
+    fs::write(&file4, "file_in_dir2").unwrap();
+}
+
 lazy_static! {
     static ref LS_TREE_SETUP_DATA: (PathBuf, [u8; 40]) = {
         let working_dir = TEST_DIR.join("ls-tree");
@@ -17,25 +36,9 @@ lazy_static! {
 
         git_init(&working_dir).unwrap();
 
-        let file1 = working_dir.join("file1.txt");
-        fs::write(&file1, "hello").unwrap();
+        setup_test_folder(&working_dir);
 
-        let dir1 = working_dir.join("dir1");
-        fs::create_dir(&dir1).unwrap();
-        let file2 = dir1.join("file_in_dir1_1");
-        let file3 = dir1.join("file_in_dir1_2");
-        fs::write(&file2, "file_in_dir1").unwrap();
-        fs::write(&file3, "file_in_dir1 2").unwrap();
-
-        let dir2 = working_dir.join("dir2");
-        fs::create_dir(&dir2).unwrap();
-        let file4 = dir2.join("file_in_dir2_1");
-        fs::write(&file4, "file_in_dir2").unwrap();
-
-        git_command_real(&working_dir)
-            .args(["stage", "."])
-            .assert()
-            .success();
+        git_stage_current_dir(&working_dir).unwrap();
 
         let tree_hash = git_command_real(&working_dir)
             .args(["write-tree"])

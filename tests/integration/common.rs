@@ -65,3 +65,10 @@ pub(crate) fn git_init(working_dir: &Path) -> anyhow::Result<Output> {
         .output()
         .context("Failed to call git init")
 }
+
+pub(crate) fn git_stage_current_dir(working_dir: &Path) -> anyhow::Result<Output> {
+    git_command_real(&working_dir)
+        .args(["stage", "."])
+        .output()
+        .context("Failed to call git stage .")
+}
