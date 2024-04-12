@@ -1,7 +1,6 @@
 use anyhow::Context;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Output;
 
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
@@ -59,16 +58,22 @@ pub(crate) fn git_command_rust(working_dir: &Path) -> std::process::Command {
     command
 }
 
-pub(crate) fn git_init(working_dir: &Path) -> anyhow::Result<Output> {
-    git_command_real(&working_dir)
+pub(crate) fn git_init(working_dir: &Path) -> anyhow::Result<()> {
+    let output = git_command_real(&working_dir)
         .args(["init"])
         .output()
-        .context("Failed to call git init")
+        .context("Failed to call git init")?;
+
+    anyhow::ensure!(output.status.success(), "git init returns none zero");
+    Ok(())
 }
 
-pub(crate) fn git_stage_current_dir(working_dir: &Path) -> anyhow::Result<Output> {
-    git_command_real(&working_dir)
+pub(crate) fn git_stage_current_dir(working_dir: &Path) -> anyhow::Result<()> {
+    let output = git_command_real(&working_dir)
         .args(["stage", "."])
         .output()
-        .context("Failed to call git stage .")
+        .context("Failed to call git stage")?;
+
+    anyhow::ensure!(output.status.success(), "git stage returns none zero");
+    Ok(())
 }

@@ -1,4 +1,5 @@
 mod cat_file;
+mod commit_tree;
 mod common;
 mod hash_object;
 mod init;
