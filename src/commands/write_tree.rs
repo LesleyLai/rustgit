@@ -1,5 +1,5 @@
 use rustgit_plumbing::hash::Sha1Hash;
-use rustgit_plumbing::object::write_object;
+use rustgit_plumbing::object::{write_object, Object, ObjectType};
 
 use anyhow::Context;
 use io::prelude::*;
@@ -12,7 +12,7 @@ fn write_tree_impl(path: &std::path::Path) -> anyhow::Result<Sha1Hash> {
 
     assert!(path.is_dir());
 
-    let mut body: Vec<u8> = vec![];
+    let mut content: Vec<u8> = vec![];
 
     let mut entries: Vec<_> = fs::read_dir(path)
         .context("read directory in git write-tree")?
@@ -28,11 +28,10 @@ fn write_tree_impl(path: &std::path::Path) -> anyhow::Result<Sha1Hash> {
 
         let object_hash = if child_path.is_file() {
             // create a blob object
-            let body = fs::read_to_string(child_path.to_str().unwrap())?;
-            let header = format!("blob {}\0", body.len());
-            let blob_data = header + &body;
-            let object_hash = Sha1Hash::from_data(blob_data.as_bytes());
-            write_object(blob_data.as_bytes(), &object_hash)?;
+            let content = fs::read_to_string(child_path.to_str().unwrap())?;
+            let blob = Object::new(ObjectType::Blob, content.as_bytes());
+            let object_hash = Sha1Hash::from_object(&blob);
+            write_object(&blob.data, &object_hash)?;
 
             object_hash
         } else if child_path.is_dir() {
@@ -50,16 +49,13 @@ fn write_tree_impl(path: &std::path::Path) -> anyhow::Result<Sha1Hash> {
             anyhow::bail!("We don't support symlink");
         };
 
-        write!(&mut body, "{:o} {}\0", mode, name.to_string_lossy())?;
-        body.extend_from_slice(&object_hash.0);
+        write!(&mut content, "{:o} {}\0", mode, name.to_string_lossy())?;
+        content.extend_from_slice(&object_hash.0);
     }
 
-    let mut content: Vec<u8> = vec![];
-    write!(content, "tree {}\0", body.len()).unwrap(); // header
-    content.extend_from_slice(&body);
-
-    let hash = Sha1Hash::from_data(&content);
-    write_object(&content, &hash).context("failed to write tree object to disk")?;
+    let tree = Object::new(ObjectType::Tree, &content);
+    let hash = Sha1Hash::from_object(&tree);
+    write_object(&tree.data, &hash)?;
     Ok(hash)
 }
 
@@ -67,7 +63,7 @@ pub fn write_tree() -> anyhow::Result<()> {
     let working_dir = std::env::current_dir()?;
     let result = write_tree_impl(&working_dir)?;
 
-    print!("{}", result.to_hex_string());
+    print!("{}", result);
 
     Ok(())
 }

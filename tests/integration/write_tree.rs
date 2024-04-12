@@ -4,6 +4,7 @@ use crate::common::{
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
+use rustgit_plumbing::utils::remove_last_if_endline;
 use std::fs;
 use std::path::Path;
 use std::str::from_utf8;
@@ -40,18 +41,14 @@ fn write_tree() -> anyhow::Result<()> {
         .output()?
         .stdout;
 
-    let tree_hash: [u8; 40] = tree_hash.try_into().unwrap();
+    let tree_hash: [u8; 40] = remove_last_if_endline(&tree_hash).try_into().unwrap();
 
-    let expected = "dir1
-dir2
-file1.txt";
+    let expected = "040000 tree 91e1483644d087af54a6e8aac15a08c482bb9fb1\tdir1
+040000 tree cf8e933fedbe540f9881ba4dc34b034785834227\tdir2
+100644 blob b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0\tfile1.txt";
 
     git_command_real(&working_dir)
-        .args([
-            "ls-tree",
-            "--name-only",
-            from_utf8(tree_hash.as_slice()).unwrap(),
-        ])
+        .args(["ls-tree", from_utf8(tree_hash.as_slice()).unwrap()])
         .assert()
         .success()
         .stdout(predicate::str::starts_with(expected));

@@ -23,14 +23,12 @@ pub struct LsTreeArgs {
 pub fn ls_tree(args: LsTreeArgs) -> anyhow::Result<()> {
     anyhow::ensure!(args.name_only, "Only implemented name_only for now");
 
-    let path = object_path_from_hash(
-        &Sha1Hash::from_unvalidated_hex_string(&args.tree_ish)?.to_hex_string(),
-    );
+    let tree_hash = Sha1Hash::from_unvalidated_hex_string(&args.tree_ish)?;
+    let path = object_path_from_hash(&tree_hash.to_hex_string());
 
     let file = File::open(&path)?;
 
-    let decoder = ZlibDecoder::new(&file);
-    let mut decoder = BufReader::new(decoder);
+    let mut decoder = BufReader::new(ZlibDecoder::new(&file));
 
     // header
     let mut output = vec![];

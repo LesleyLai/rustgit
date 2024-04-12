@@ -1,3 +1,4 @@
+use crate::object::Object;
 use anyhow::Context;
 use sha1::Digest;
 use std::fmt::{Display, Formatter};
@@ -32,6 +33,11 @@ fn byte2hex(byte: u8) -> (u8, u8) {
 }
 
 impl Sha1Hash {
+    /// Compute a hash from a git object
+    pub fn from_object(object: &Object) -> Self {
+        Self::from_data(&object.data)
+    }
+
     pub fn from_data(data: &[u8]) -> Self {
         let mut hasher = sha1::Sha1::new();
         hasher.update(data);
@@ -45,7 +51,7 @@ impl Sha1Hash {
     }
 
     pub fn from_unvalidated_hex_string(s: &str) -> anyhow::Result<Self> {
-        let data = hex::decode(s).context(format!("Invalid hex string: {}", s))?;
+        let data = hex::decode(s).with_context(|| format!("Invalid hex string: {}", s))?;
 
         Ok(Sha1Hash(
             data.as_slice()
@@ -86,11 +92,11 @@ mod tests {
     }
 
     #[test]
-    fn from_data() {
+    fn from_object() {
         let blob = Object::new(ObjectType::Blob, "hello world\n".as_bytes());
 
         assert_eq!(
-            &Sha1Hash::from_data(&blob.data).to_string(),
+            &Sha1Hash::from_object(&blob).to_string(),
             "3b18e512dba79e4c8300dd08aeb37f8e728b8dad"
         )
     }

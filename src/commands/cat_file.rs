@@ -2,9 +2,7 @@ use crate::parse_util::parse_usize;
 use anyhow::Context;
 use clap::Args;
 use flate2::read::ZlibDecoder;
-use rustgit_plumbing::hash::Sha1Hash;
-use rustgit_plumbing::object::object_path_from_hash;
-use rustgit_plumbing::utils::remove_last;
+use rustgit_plumbing::{hash::Sha1Hash, object::object_path_from_hash, utils::remove_last};
 use std::{
     fs::File,
     io::{prelude::*, BufReader, Write},
@@ -22,14 +20,11 @@ pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
     assert!(args.pretty_print, "Only works with -p now");
 
     // TODO: support shortest unique object hashes
-    let object_hash = Sha1Hash::from_unvalidated_hex_string(&args.object_hash)
-        .context(format!("invalid object hash {}", args.object_hash))?
-        .to_hex_string();
-    let path = object_path_from_hash(&object_hash);
+    let object_hash = Sha1Hash::from_unvalidated_hex_string(&args.object_hash)?;
+    let path = object_path_from_hash(&object_hash.to_hex_string());
 
     let file = File::open(&path)?;
-    let decoder = ZlibDecoder::new(&file);
-    let mut decoder = BufReader::new(decoder);
+    let mut decoder = BufReader::new(ZlibDecoder::new(&file));
 
     let mut output = vec![];
     decoder
@@ -41,6 +36,7 @@ pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
         .position(|&c| c == b' ')
         .context("header has space separator")?;
     let (typ, mut size) = remove_last(&output).split_at(separate_point);
+    // TODO: support tree and commits
     if typ != b"blob" {
         anyhow::bail!(".git/object file header does not start with a known type");
     }

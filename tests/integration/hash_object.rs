@@ -19,7 +19,9 @@ fn no_required_arg() -> anyhow::Result<()> {
         .args(["hash-object"])
         .assert()
         .failure()
-        .stderr(predicates::str::contains("required arguments were not provided"));
+        .stderr(predicates::str::contains(
+            "required arguments were not provided",
+        ));
 
     Ok(())
 }

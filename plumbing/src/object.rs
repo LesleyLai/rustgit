@@ -2,6 +2,7 @@
 
 use crate::hash::{Sha1Hash, Sha1HashHexString};
 use anyhow::Context;
+use std::fmt::{Display, Formatter};
 
 #[allow(dead_code)]
 #[derive(Eq, PartialEq, Copy, Clone)]
@@ -9,6 +10,17 @@ pub enum ObjectType {
     Blob,
     Tree,
     Commit,
+}
+
+impl Display for ObjectType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        use ObjectType::*;
+        match *self {
+            Blob => write!(f, "blob"),
+            Tree => write!(f, "tree"),
+            Commit => write!(f, "commit"),
+        }
+    }
 }
 
 pub struct Object {
@@ -19,17 +31,13 @@ pub struct Object {
 impl Object {
     // Given the type of object and content of a file, create a valid git object
     pub fn new(typ: ObjectType, content: &[u8]) -> Self {
-        if typ != ObjectType::Blob {
-            unimplemented!("only blobs are supported for now!");
-        }
-
-        let mut data = format!("blob {}\0", content.len()).into_bytes();
+        let mut data = format!("{} {}\0", typ, content.len()).into_bytes();
         data.extend_from_slice(&content);
         Self { data }
     }
 }
 
-// Given an SHA1 hash of a git object, return back its path in .git/objects
+/// Given an SHA1 hash of a git object, return back its path in .git/objects
 pub fn object_path_from_hash(object_hash: &Sha1HashHexString) -> std::path::PathBuf {
     // TODO: support shortest unique object hashes
     let path = std::env::current_dir().expect("Cannot get working directory");
@@ -39,8 +47,8 @@ pub fn object_path_from_hash(object_hash: &Sha1HashHexString) -> std::path::Path
         .join(std::str::from_utf8(s2).unwrap())
 }
 
-/// Given content of a git object and its Sha1 hash, write it to disk
-pub fn write_object(content: &[u8], object_hash: &Sha1Hash) -> anyhow::Result<()> {
+/// Given full data of a git object and its Sha1 hash, write it to disk
+pub fn write_object(data: &[u8], object_hash: &Sha1Hash) -> anyhow::Result<()> {
     use flate2::read::ZlibEncoder;
     use std::{fs, fs::File, io::prelude::*};
 
@@ -54,7 +62,7 @@ pub fn write_object(content: &[u8], object_hash: &Sha1Hash) -> anyhow::Result<()
         )
     })?;
 
-    let mut encoder = ZlibEncoder::new(content, Default::default());
+    let mut encoder = ZlibEncoder::new(data, Default::default());
     let mut output = vec![];
     encoder.read_to_end(&mut output)?;
     let mut file = File::create(&tree_object_path)
