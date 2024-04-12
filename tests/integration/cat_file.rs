@@ -1,7 +1,7 @@
 use crate::common::{git_command_real, git_command_rust, git_init, test_path};
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::str::from_utf8;
+use rustgit_plumbing::hash::Sha1HashHexString;
 
 // cat-file -p <blob>
 #[test]
@@ -22,11 +22,11 @@ fn pretty_print_blob() -> anyhow::Result<()> {
         .args(["hash-object", "-w", file_name])
         .assert()
         .success();
-    let hash = &hash_object_cmd.get_output().stdout;
+    let hash = Sha1HashHexString::from_u8_slice(&hash_object_cmd.get_output().stdout)?;
 
     // rustgit cat-file -p
     git_command_rust(&working_dir)
-        .args(["cat-file", "-p", from_utf8(hash).unwrap().trim()])
+        .args(["cat-file", "-p", &hash])
         .assert()
         .success()
         .stdout(predicate::eq(file_content));

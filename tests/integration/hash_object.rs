@@ -1,12 +1,11 @@
 use crate::common::{git_command_real, git_command_rust, git_init, test_path};
-use rustgit_plumbing::utils::remove_last;
 
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
+use rustgit_plumbing::hash::Sha1HashHexString;
 use std::{
     io::{Read, Write},
     process::Stdio,
-    str::from_utf8,
 };
 
 #[test]
@@ -46,12 +45,12 @@ fn write_blob() -> anyhow::Result<()> {
         .args(["hash-object", "-w", file_name])
         .assert()
         .success();
-    let hash = &hash_object_cmd.get_output().stdout;
-    assert_eq!(expected_hash, &remove_last(&hash));
+    let hash = Sha1HashHexString::from_u8_slice(&hash_object_cmd.get_output().stdout)?;
+    assert_eq!(expected_hash, &hash.0);
 
     // check file content with git cat-file -p
     git_command_real(&working_dir)
-        .args(["cat-file", "-p", from_utf8(hash).unwrap().trim()])
+        .args(["cat-file", "-p", &hash])
         .assert()
         .success()
         .stdout(predicate::eq(file_content));
@@ -84,7 +83,7 @@ fn stdin() -> anyhow::Result<()> {
     assert!(child_process.wait()?.success());
     let mut hash = String::new();
     child_process.stdout.unwrap().read_to_string(&mut hash)?;
-    assert_eq!(&remove_last(hash.as_bytes()), expected_hash);
+    assert_eq!(&Sha1HashHexString::from_str(&hash)?.0, expected_hash);
 
     Ok(())
 }

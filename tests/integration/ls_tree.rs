@@ -1,42 +1,24 @@
 use crate::common::{
-    git_command_real, git_command_rust, git_init, git_stage_current_dir, TEST_DIR,
+    git_command_real, git_command_rust, git_init, git_stage_current_dir, populate_folder, TEST_DIR,
 };
 
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 use predicates::prelude::*;
-use rustgit_plumbing::utils::remove_last;
+use rustgit_plumbing::hash::Sha1HashHexString;
 use std::{
     fs,
     path::{Path, PathBuf},
-    str::from_utf8,
 };
 
-fn setup_test_folder(dir: &Path) {
-    let file1 = dir.join("file1.txt");
-    fs::write(&file1, "hello").unwrap();
-
-    let dir1 = dir.join("dir1");
-    fs::create_dir(&dir1).unwrap();
-    let file2 = dir1.join("file_in_dir1_1");
-    let file3 = dir1.join("file_in_dir1_2");
-    fs::write(&file2, "file_in_dir1").unwrap();
-    fs::write(&file3, "file_in_dir1 2").unwrap();
-
-    let dir2 = dir.join("dir2");
-    fs::create_dir(&dir2).unwrap();
-    let file4 = dir2.join("file_in_dir2_1");
-    fs::write(&file4, "file_in_dir2").unwrap();
-}
-
 lazy_static! {
-    static ref LS_TREE_SETUP_DATA: (PathBuf, [u8; 40]) = {
+    static ref LS_TREE_SETUP_DATA: (PathBuf, Sha1HashHexString) = {
         let working_dir = TEST_DIR.join("ls-tree");
         fs::create_dir(&working_dir).unwrap();
 
         git_init(&working_dir).unwrap();
 
-        setup_test_folder(&working_dir);
+        populate_folder(&working_dir);
 
         git_stage_current_dir(&working_dir).unwrap();
 
@@ -45,8 +27,7 @@ lazy_static! {
             .output()
             .unwrap()
             .stdout;
-
-        let tree_hash: [u8; 40] = remove_last(&tree_hash).try_into().unwrap();
+        let tree_hash = Sha1HashHexString::from_u8_slice(&tree_hash).unwrap();
 
         (working_dir, tree_hash)
     };
@@ -63,11 +44,7 @@ dir2
 file1.txt";
 
     git_command_rust(&working_dir)
-        .args([
-            "ls-tree",
-            "--name-only",
-            from_utf8(tree_hash.as_slice()).unwrap(),
-        ])
+        .args(["ls-tree", "--name-only", &tree_hash])
         .assert()
         .success()
         .stdout(predicate::str::starts_with(expected));

@@ -3,13 +3,10 @@ pub fn remove_last<T>(slice: &[T]) -> &[T] {
     &slice[..slice.len() - 1]
 }
 
-pub fn remove_last_if_match<'a, 'b, T: Eq>(slice: &'a [T], val: &'b T) -> &'a [T] {
-    match slice.last() {
-        Some(e) if *e == *val => &slice[..slice.len() - 1],
-        _ => slice,
+/// trim characters such as space, tab, or new lines
+pub fn trim_whitespace(x: &[u8]) -> &[u8] {
+    match x.last() {
+        Some(c) if c.is_ascii_whitespace() => &x[..x.len() - 1],
+        _ => x,
     }
-}
-
-pub fn remove_last_if_endline(slice: &[u8]) -> &[u8] {
-    remove_last_if_match(slice, &b'\n')
 }

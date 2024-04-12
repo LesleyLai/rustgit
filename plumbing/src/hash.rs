@@ -1,25 +1,16 @@
 use crate::object::Object;
+use crate::utils::trim_whitespace;
 use anyhow::Context;
 use sha1::Digest;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 /// 20-bytes raw hash
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Sha1Hash(pub [u8; 20]);
 
 // 40-char Hex string
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Sha1HashHexString(pub [u8; 40]);
-
-impl Display for Sha1Hash {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.to_hex_string().fmt(f)
-    }
-}
-
-impl Display for Sha1HashHexString {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", std::str::from_utf8(&self.0).unwrap())
-    }
-}
 
 // Byte to 2-char hex string representation
 #[inline]
@@ -69,6 +60,43 @@ impl Sha1Hash {
         }
 
         Sha1HashHexString(output)
+    }
+}
+
+impl Display for Sha1Hash {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_hex_string())
+    }
+}
+
+impl Sha1HashHexString {
+    pub fn from_str(s: &str) -> anyhow::Result<Self> {
+        Self::from_u8_slice(s.as_bytes())
+    }
+    pub fn from_u8_slice(bytes: &[u8]) -> anyhow::Result<Self> {
+        let data: [u8; 40] = trim_whitespace(bytes).try_into()?;
+        Ok(Sha1HashHexString(data))
+    }
+}
+
+impl Display for Sha1HashHexString {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", std::str::from_utf8(&self.0).unwrap())
+    }
+}
+
+impl Debug for Sha1HashHexString {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
+impl std::ops::Deref for Sha1HashHexString {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &str {
+        unsafe { std::str::from_utf8_unchecked(&self.0) }
     }
 }
 

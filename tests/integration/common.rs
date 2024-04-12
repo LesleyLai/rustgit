@@ -77,3 +77,21 @@ pub(crate) fn git_stage_current_dir(working_dir: &Path) -> anyhow::Result<()> {
     anyhow::ensure!(output.status.success(), "git stage returns none zero");
     Ok(())
 }
+
+/// Populate the current folder with some files for testing
+pub(crate) fn populate_folder(dir: &Path) {
+    let file1 = dir.join("file1.txt");
+    fs::write(&file1, "hello").unwrap();
+
+    let dir1 = dir.join("dir1");
+    fs::create_dir(&dir1).unwrap();
+    let file2 = dir1.join("file_in_dir1_1");
+    let file3 = dir1.join("file_in_dir1_2");
+    fs::write(&file2, "file_in_dir1").unwrap();
+    fs::write(&file3, "file_in_dir1 2").unwrap();
+
+    let dir2 = dir.join("dir2");
+    fs::create_dir(&dir2).unwrap();
+    let file4 = dir2.join("file_in_dir2_1");
+    fs::write(&file4, "file_in_dir2").unwrap();
+}
