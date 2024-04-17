@@ -1,7 +1,5 @@
-use anyhow::Context;
 use clap::Args;
-
-use rustgit_plumbing::{hash::Sha1Hash, object::write_object};
+use rustgit_plumbing::hash::Sha1Hash;
 
 #[derive(Args, Debug)]
 pub struct CommitTreeArgs {
@@ -15,31 +13,22 @@ pub struct CommitTreeArgs {
 }
 
 pub fn commit_tree(args: CommitTreeArgs) -> anyhow::Result<()> {
-    // TODO: validate those sha
+    let tree_sha = Sha1Hash::from_unvalidated_hex_string(&args.tree_sha)?;
 
-    let mut content = String::new();
-    content.push_str(&format!("tree {}\n", args.tree_sha));
-    if let Some(parent_commit_sha) = &args.parent_commit_sha {
-        content.push_str(&format!("parent {parent_commit_sha}\n"));
-    }
+    let parent_commit_sha = if let Some(sha) = &args.parent_commit_sha {
+        Some(Sha1Hash::from_unvalidated_hex_string(sha)?)
+    } else {
+        None
+    };
 
-    // TODO: don't hardcode author names
-    content.push_str(&format!(
-        "author Lesley Lai <lesley@lesleylai.info> 1243040974 -0700
-committer Lesley Lai <lesley@lesleylai.info> 1243040974 -0700
+    let commit_hash =
+        rustgit_plumbing::object::commit_tree(rustgit_plumbing::object::CommitTreeArgs {
+            parent_commit_sha,
+            message: args.message,
+            tree_sha,
+        })?;
 
-{}
-",
-        args.message
-    ));
-
-    let header = format!("commit {}\0", content.len());
-    let data = header + &content;
-
-    let hash = Sha1Hash::from_data(data.as_bytes());
-    write_object(data.as_bytes(), &hash).context("failed to write commit object to disk")?;
-
-    println!("{}", hash.to_hex_string());
+    println!("{}", commit_hash);
 
     Ok(())
 }

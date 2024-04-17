@@ -31,6 +31,9 @@ enum Command {
 
     /// Create a new commit object
     CommitTree(CommitTreeArgs),
+
+    /// Record changes to the repository
+    Commit(CommitArgs),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -44,5 +47,6 @@ fn main() -> anyhow::Result<()> {
         LsTree(args) => ls_tree(args),
         WriteTree => write_tree(),
         CommitTree(args) => commit_tree(args),
+        Commit(args) => commit(args),
     }
 }

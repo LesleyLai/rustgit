@@ -1,4 +1,5 @@
 mod cat_file;
+mod commit;
 mod commit_tree;
 mod hash_object;
 mod init;
@@ -6,6 +7,7 @@ mod ls_tree;
 mod write_tree;
 
 pub use cat_file::{cat_file, CatFileArgs};
+pub use commit::{commit, CommitArgs};
 pub use commit_tree::{commit_tree, CommitTreeArgs};
 pub use hash_object::{hash_object, HashObjectArgs};
 pub use init::init;
