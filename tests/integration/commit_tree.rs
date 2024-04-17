@@ -1,5 +1,5 @@
 use crate::common::git::stage_current_dir;
-use crate::common::{git, populate_folder, rustgit, test_path};
+use crate::common::{git, populate_folder, rustgit, test_path, with_common_insta_settings};
 use assert_cmd::prelude::*;
 use rustgit_plumbing::hash::Sha1HashHexString;
 use std::{fs, path::Path};
@@ -59,13 +59,18 @@ fn with_parent() -> anyhow::Result<()> {
         .output()?;
     assert!(output.status.success());
 
-    // TODO: more accurate assertions
     let catfile_output = std::str::from_utf8(&output.stdout).unwrap();
 
-    assert!(catfile_output.contains(&format!("tree {}", tree_hash)));
-    assert!(catfile_output.contains(&format!("parent {}", parent_commit_hash)));
-    assert!(catfile_output.contains("author"));
-    assert!(catfile_output.contains("committer"));
+    with_common_insta_settings(|| {
+        let mut settings = insta::Settings::clone_current();
+        settings.add_filter(
+            r" .* <.*@.*\..*> \d{10} [+|-]\d{4}",
+            " [name] <[email]> [date_seconds] [timezone]",
+        );
+        settings.bind(|| {
+            insta::assert_snapshot!(catfile_output);
+        });
+    });
 
     Ok(())
 }

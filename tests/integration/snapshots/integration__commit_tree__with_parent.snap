@@ -1,0 +1,11 @@
+---
+source: tests/integration/commit_tree.rs
+assertion_line: 71
+expression: catfile_output
+---
+tree [sha1]
+parent [sha1]
+author [name] <[email]> [date_seconds] [timezone]
+committer [name] <[email]> [date_seconds] [timezone]
+
+"another commit"

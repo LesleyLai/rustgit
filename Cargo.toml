@@ -18,6 +18,7 @@ assert_cmd = "2.0.14"
 tempdir = "0.3.7"
 predicates = "3.1.0"
 lazy_static = "1.4.0"
+insta = { version = "1.38.0", features = ["filters"] }
 
 [workspace]
 members = [

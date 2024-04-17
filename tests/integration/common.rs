@@ -130,3 +130,11 @@ pub(crate) fn populate_folder(dir: &Path) {
     let file4 = dir2.join("file_in_dir2_1");
     fs::write(&file4, "file_in_dir2").unwrap();
 }
+
+pub(crate) fn with_common_insta_settings(f: impl FnOnce() -> ()) {
+    insta::with_settings!({filters => vec![
+        (r"\b[[:xdigit:]]{40}\b", "[sha1]"),
+    ]}, {
+        f()
+    })
+}
