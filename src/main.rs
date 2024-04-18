@@ -34,6 +34,8 @@ enum Command {
 
     /// Record changes to the repository
     Commit(CommitArgs),
+
+    RevParse(RevParseArgs),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -48,5 +50,6 @@ fn main() -> anyhow::Result<()> {
         WriteTree => write_tree(),
         CommitTree(args) => commit_tree(args),
         Commit(args) => commit(args),
+        RevParse(args) => rev_parse(args),
     }
 }

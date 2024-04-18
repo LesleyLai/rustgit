@@ -17,8 +17,6 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
     // git write-tree
     let tree_sha = write_tree(&working_dir)?;
 
-    // TODO: get current branch tip as parent
-
     // git commit-tree
     let _commit_sha = commit_tree(CommitTreeArgs {
         parent_commit_sha: None,
