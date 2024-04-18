@@ -11,21 +11,21 @@ lazy_static! {
         let working_dir = TEST_DIR.join("rev-parse");
         fs::create_dir(&working_dir).unwrap();
 
-        git::init(&working_dir).unwrap();
+        git(&working_dir).init();
         populate_folder(&working_dir);
-        git::stage_current_dir(&working_dir).unwrap();
+        git(&working_dir).stage(".");
 
-        git::new_command(&working_dir).commit("message");
+        git(&working_dir).commit("message");
         working_dir
     };
     static ref EXPECTED_HEAD_HASH: Sha1HashHexString =
-        git::new_command(&WORKING_DIR).rev_parse(["HEAD"]).unwrap();
+        git(&WORKING_DIR).rev_parse(["HEAD"]).unwrap();
 }
 
 // git rev-parse HEAD
 #[test]
 fn head() {
-    rustgit::new_command(&WORKING_DIR)
+    rustgit(&WORKING_DIR)
         .args(["rev-parse", "HEAD"])
         .assert()
         .success()
@@ -36,7 +36,7 @@ fn head() {
 // git rev-parse HEAD
 #[test]
 fn in_subfolder() {
-    rustgit::new_command(&WORKING_DIR.join("dir1"))
+    rustgit(&WORKING_DIR.join("dir1"))
         .args(["rev-parse", "HEAD"])
         .assert()
         .success()

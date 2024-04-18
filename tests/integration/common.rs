@@ -1,5 +1,7 @@
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
+use rustgit_plumbing::hash::Sha1HashHexString;
+use rustgit_plumbing::utils::trim_whitespace;
 use std::{
     ffi::OsStr,
     fs,
@@ -12,7 +14,7 @@ lazy_static! {
         let temp_dir = std::env::temp_dir();
         let dir = temp_dir.join("rustgit_tests");
 
-        let _ = fs::remove_dir_all(&dir); // supress error
+        let _ = fs::remove_dir_all(&dir); // suppress error
         fs::create_dir(&dir).unwrap();
         dir
     };
@@ -32,8 +34,6 @@ macro_rules! function_name {
     }};
 }
 pub(crate) use function_name;
-use rustgit_plumbing::hash::Sha1HashHexString;
-use rustgit_plumbing::utils::trim_whitespace;
 
 /// Generate a unique temporary working directory for each path
 macro_rules! test_path {
@@ -51,16 +51,21 @@ pub(crate) use test_path;
 pub(crate) struct GitCommand(Command);
 
 impl GitCommand {
-    pub(crate) fn new(mut command: Command, working_dir: &Path) -> Self {
+    fn new(mut command: Command, working_dir: &Path) -> Self {
         command.current_dir(&working_dir);
         GitCommand(command)
     }
+
     pub(crate) fn args<I, S>(&mut self, args: I) -> &mut Command
     where
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
         self.0.args(args)
+    }
+
+    pub(crate) fn init(mut self) {
+        self.args(["init"]).assert().success();
     }
 
     pub(crate) fn write_tree(mut self) -> anyhow::Result<Sha1HashHexString> {
@@ -79,54 +84,25 @@ impl GitCommand {
         Sha1HashHexString::from_u8_slice(trim_whitespace(&output.stdout))
     }
 
+    pub(crate) fn stage(mut self, dir: &str) {
+        self.args(["stage", dir]).assert().success();
+    }
+
     pub(crate) fn commit(mut self, msg: &str) {
-        self.0.args(["commit", "-m", msg]).assert().success();
+        self.args(["commit", "-m", msg]).assert().success();
     }
 }
 
-/// rustgit under test
-pub(crate) mod rustgit {
-    use crate::common::GitCommand;
-    use assert_cmd::prelude::*;
-    use std::path::Path;
-
-    pub(crate) fn new_command(working_dir: &Path) -> GitCommand {
-        let command = std::process::Command::cargo_bin("rustgit").expect("Cannot find executable");
-        GitCommand::new(command, &working_dir)
-    }
+/// Create a command for the real git
+pub(crate) fn git(working_dir: &Path) -> GitCommand {
+    let command = Command::new("git");
+    GitCommand::new(command, &working_dir)
 }
 
-/// Contains command for the real git
-pub(crate) mod git {
-    use crate::common::GitCommand;
-    use anyhow::Context;
-    use std::path::Path;
-
-    /// The real git command
-    pub(crate) fn new_command(working_dir: &Path) -> GitCommand {
-        let command = std::process::Command::new("git");
-        GitCommand::new(command, &working_dir)
-    }
-
-    pub(crate) fn init(working_dir: &Path) -> anyhow::Result<()> {
-        let output = new_command(&working_dir)
-            .args(["init"])
-            .output()
-            .context("Failed to call git init")?;
-
-        anyhow::ensure!(output.status.success(), "git init returns none zero");
-        Ok(())
-    }
-
-    pub(crate) fn stage_current_dir(working_dir: &Path) -> anyhow::Result<()> {
-        let output = new_command(&working_dir)
-            .args(["stage", "."])
-            .output()
-            .context("Failed to call git stage")?;
-
-        anyhow::ensure!(output.status.success(), "git stage returns none zero");
-        Ok(())
-    }
+/// Create a command for rustgit
+pub(crate) fn rustgit(working_dir: &Path) -> GitCommand {
+    let command = Command::cargo_bin("rustgit").expect("Cannot find rustgit executable");
+    GitCommand::new(command, &working_dir)
 }
 
 /// Populate the current folder with some files for testing

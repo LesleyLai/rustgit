@@ -9,20 +9,18 @@ use std::{
 };
 
 #[test]
-fn no_required_arg() -> anyhow::Result<()> {
+fn no_required_arg() {
     let working_dir = test_path!();
 
-    git::init(&working_dir)?;
+    git(&working_dir).init();
 
-    rustgit::new_command(&working_dir)
+    rustgit(&working_dir)
         .args(["hash-object"])
         .assert()
         .failure()
         .stderr(predicates::str::contains(
             "required arguments were not provided",
         ));
-
-    Ok(())
 }
 
 // hash-object -w <blob>
@@ -34,14 +32,14 @@ fn write_blob() -> anyhow::Result<()> {
 
     let working_dir = test_path!();
 
-    git::init(&working_dir)?;
+    git(&working_dir).init();
 
     // write content to file.txt
     let file_path = working_dir.join("file.txt");
     std::fs::write(&file_path, file_content)?;
 
     // rustgit hash-object -w
-    let hash_object_cmd = rustgit::new_command(&working_dir)
+    let hash_object_cmd = rustgit(&working_dir)
         .args(["hash-object", "-w", file_name])
         .assert()
         .success();
@@ -49,7 +47,7 @@ fn write_blob() -> anyhow::Result<()> {
     assert_eq!(expected_hash, &hash.0);
 
     // check file content with git cat-file -p
-    git::new_command(&working_dir)
+    git(&working_dir)
         .args(["cat-file", "-p", &hash])
         .assert()
         .success()
@@ -66,10 +64,10 @@ fn stdin() -> anyhow::Result<()> {
 
     let working_dir = test_path!();
 
-    git::init(&working_dir)?;
+    git(&working_dir).init();
 
     // rustgit hash-object
-    let mut child_process = rustgit::new_command(&working_dir)
+    let mut child_process = rustgit(&working_dir)
         .args(["hash-object", "--stdin"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

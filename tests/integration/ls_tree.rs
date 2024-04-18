@@ -11,13 +11,13 @@ lazy_static! {
         let working_dir = TEST_DIR.join("ls-tree");
         fs::create_dir(&working_dir).unwrap();
 
-        git::init(&working_dir).unwrap();
+        git(&working_dir).init();
         populate_folder(&working_dir);
-        git::stage_current_dir(&working_dir).unwrap();
+        git(&working_dir).stage(".");
 
         working_dir
     };
-    static ref TREE_HASH: Sha1HashHexString = git::new_command(&WORKING_DIR).write_tree().unwrap();
+    static ref TREE_HASH: Sha1HashHexString = git(&WORKING_DIR).write_tree().unwrap();
 }
 
 // ls-tree --name-only <tree-sha>
@@ -27,7 +27,7 @@ fn name_only() -> anyhow::Result<()> {
 dir2
 file1.txt";
 
-    rustgit::new_command(&WORKING_DIR)
+    rustgit(&WORKING_DIR)
         .args(["ls-tree", "--name-only", &TREE_HASH])
         .assert()
         .success()

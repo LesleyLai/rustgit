@@ -6,15 +6,15 @@ use std::str::from_utf8;
 fn write_tree() -> anyhow::Result<()> {
     let working_dir = test_path!();
 
-    git::init(&working_dir)?;
+    git(&working_dir).init();
 
     populate_folder(&working_dir);
 
-    git::stage_current_dir(&working_dir)?;
+    git(&working_dir).stage(".");
 
-    let tree_hash = rustgit::new_command(&working_dir).write_tree()?;
+    let tree_hash = rustgit(&working_dir).write_tree()?;
 
-    let command = git::new_command(&working_dir)
+    let command = git(&working_dir)
         .args(["ls-tree", &tree_hash])
         .assert()
         .success();

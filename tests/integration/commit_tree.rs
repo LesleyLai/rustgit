@@ -1,11 +1,10 @@
-use crate::common::git::stage_current_dir;
 use crate::common::{git, populate_folder, rustgit, test_path, with_common_insta_settings};
 use assert_cmd::prelude::*;
 use rustgit_plumbing::hash::Sha1HashHexString;
 use std::{fs, path::Path};
 
 fn head_sha(working_dir: &Path) -> anyhow::Result<Sha1HashHexString> {
-    let hash = git::new_command(working_dir)
+    let hash = git(working_dir)
         .args(["rev-parse", "HEAD"])
         .output()?
         .stdout;
@@ -17,14 +16,14 @@ fn head_sha(working_dir: &Path) -> anyhow::Result<Sha1HashHexString> {
 fn with_parent() -> anyhow::Result<()> {
     let working_dir = test_path!();
 
-    git::init(&working_dir)?;
+    git(&working_dir).init();
 
     populate_folder(&working_dir);
 
-    stage_current_dir(&working_dir)?;
+    git(&working_dir).stage(".");
 
     // Initial commit
-    git::new_command(&working_dir)
+    git(&working_dir)
         .args(["commit", "-m", "\"initial commit\""])
         .assert()
         .success();
@@ -34,11 +33,11 @@ fn with_parent() -> anyhow::Result<()> {
 
     // create another file
     fs::write(&working_dir.join("another file.txt"), "another file").unwrap();
-    stage_current_dir(&working_dir)?;
+    git(&working_dir).stage(".");
 
-    let tree_hash = git::new_command(&working_dir).write_tree()?;
+    let tree_hash = git(&working_dir).write_tree()?;
 
-    let output = rustgit::new_command(&working_dir)
+    let output = rustgit(&working_dir)
         .args([
             "commit-tree",
             &tree_hash,
@@ -54,7 +53,7 @@ fn with_parent() -> anyhow::Result<()> {
     let commit_hash = Sha1HashHexString::from_u8_slice(&output.stdout)?;
 
     // git cat-file commit <sha>
-    let output = git::new_command(&working_dir)
+    let output = git(&working_dir)
         .args(["cat-file", "commit", &commit_hash])
         .output()?;
     assert!(output.status.success());

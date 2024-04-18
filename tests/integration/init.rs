@@ -10,7 +10,7 @@ fn init() -> anyhow::Result<()> {
 
     let git_dir = working_dir.join(".git");
 
-    rustgit::new_command(&working_dir)
+    rustgit(&working_dir)
         .args(["init"])
         .assert()
         .success()
