@@ -1,15 +1,11 @@
 use crate::hash::Sha1Hash;
-use std::env::current_dir;
-use std::io::ErrorKind;
+use std::{io::ErrorKind, path::Path};
 
-pub fn get_head_hash() -> anyhow::Result<Option<Sha1Hash>> {
-    // TODO: find repository path
-    let head_content = std::fs::read_to_string(".git/HEAD")?;
+pub fn get_head_hash(repository_path: &Path) -> anyhow::Result<Option<Sha1Hash>> {
+    let head_content = std::fs::read_to_string(repository_path.join(".git/HEAD"))?;
 
     let hash = if head_content.starts_with("ref: ") {
-        let ref_path = current_dir()?
-            .join(".git")
-            .join(&head_content[5..].trim_end());
+        let ref_path = repository_path.join(".git").join(&head_content[5..].trim());
 
         let ref_content_result = std::fs::read_to_string(&ref_path);
         if let Err(ref err) = ref_content_result {

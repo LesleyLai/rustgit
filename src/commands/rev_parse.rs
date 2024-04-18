@@ -1,6 +1,7 @@
 use clap::Args;
 
 use rustgit_plumbing::references::get_head_hash;
+use rustgit_plumbing::repository::Repository;
 
 #[derive(Args, Debug)]
 pub struct RevParseArgs {
@@ -9,13 +10,13 @@ pub struct RevParseArgs {
 }
 
 pub fn rev_parse(args: RevParseArgs) -> anyhow::Result<()> {
-    //let working_dir = std::env::current_dir()?;
+    let repository = Repository::new()?;
 
     if args.arg == "HEAD" {
-        let maybe_head_hash = get_head_hash()?;
-        match maybe_head_hash {
-            Some(hash) => println!("{}", hash),
-            None => anyhow::bail!("HEAD doesn't exist"),
+        if let Some(head_hash) = get_head_hash(&repository.repository_dir)? {
+            println!("{}", head_hash)
+        } else {
+            anyhow::bail!("HEAD doesn't exist")
         }
     } else {
         anyhow::bail!("rev-parse on anything other than HEAD is not currently supported");

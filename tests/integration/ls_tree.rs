@@ -4,40 +4,31 @@ use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 use predicates::prelude::*;
 use rustgit_plumbing::hash::Sha1HashHexString;
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{fs, path::PathBuf};
 
 lazy_static! {
-    static ref LS_TREE_SETUP_DATA: (PathBuf, Sha1HashHexString) = {
+    static ref WORKING_DIR: PathBuf = {
         let working_dir = TEST_DIR.join("ls-tree");
         fs::create_dir(&working_dir).unwrap();
 
         git::init(&working_dir).unwrap();
-
         populate_folder(&working_dir);
-
         git::stage_current_dir(&working_dir).unwrap();
 
-        let tree_hash = git::new_command(&working_dir).write_tree().unwrap();
-
-        (working_dir, tree_hash)
+        working_dir
     };
+    static ref TREE_HASH: Sha1HashHexString = git::new_command(&WORKING_DIR).write_tree().unwrap();
 }
 
 // ls-tree --name-only <tree-sha>
 #[test]
 fn name_only() -> anyhow::Result<()> {
-    let working_dir: &Path = &LS_TREE_SETUP_DATA.0;
-    let tree_hash = LS_TREE_SETUP_DATA.1;
-
     let expected = "dir1
 dir2
 file1.txt";
 
-    rustgit::new_command(&working_dir)
-        .args(["ls-tree", "--name-only", &tree_hash])
+    rustgit::new_command(&WORKING_DIR)
+        .args(["ls-tree", "--name-only", &TREE_HASH])
         .assert()
         .success()
         .stdout(predicate::str::starts_with(expected));

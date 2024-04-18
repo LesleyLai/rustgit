@@ -20,6 +20,8 @@ The objective is to develop something that can seamlessly substitute normal Git 
 | `hash-object` |                                                                                   |
 | `ls-tree`     | currently only supports `--name-only`                                             |
 | `write-tree`  | currently just write the whole folder without consider what's in the stage buffer |
+| `commit-tree` | currently hardcode author info                                                    |
+| `rev-parse`   | currently only work with `HEAD`                                                   |
 
 ## References
 

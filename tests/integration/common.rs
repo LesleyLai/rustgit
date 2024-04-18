@@ -1,3 +1,4 @@
+use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 use std::{
     ffi::OsStr,
@@ -32,6 +33,7 @@ macro_rules! function_name {
 }
 pub(crate) use function_name;
 use rustgit_plumbing::hash::Sha1HashHexString;
+use rustgit_plumbing::utils::trim_whitespace;
 
 /// Generate a unique temporary working directory for each path
 macro_rules! test_path {
@@ -64,7 +66,21 @@ impl GitCommand {
     pub(crate) fn write_tree(mut self) -> anyhow::Result<Sha1HashHexString> {
         let output = self.args(["write-tree"]).output()?;
         anyhow::ensure!(output.status.success());
-        Sha1HashHexString::from_u8_slice(&output.stdout)
+        Sha1HashHexString::from_u8_slice(trim_whitespace(&output.stdout))
+    }
+
+    pub(crate) fn rev_parse<I, S>(mut self, args: I) -> anyhow::Result<Sha1HashHexString>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        let output = self.0.arg("rev-parse").args(args).output()?;
+        anyhow::ensure!(output.status.success());
+        Sha1HashHexString::from_u8_slice(trim_whitespace(&output.stdout))
+    }
+
+    pub(crate) fn commit(mut self, msg: &str) {
+        self.0.args(["commit", "-m", msg]).assert().success();
     }
 }
 

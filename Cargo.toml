@@ -10,7 +10,7 @@ authors = ["Lesley Lai <lesley@lesleylai.info>"]
 clap = { version = "4.5.4", features = ["derive"] } # creating a cli
 flate2 = "1.0"                                       # gzip compression
 anyhow = "1.0.81"                                    # error handling
-thiserror = "1.0.58"                                 # error handling
+thiserror = "1.0.58"
 rustgit_plumbing = { path = "./plumbing" }
 
 [dev-dependencies]

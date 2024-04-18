@@ -487,6 +487,7 @@ dependencies = [
  "flate2",
  "hex",
  "sha1",
+ "thiserror",
 ]
 
 [[package]]
