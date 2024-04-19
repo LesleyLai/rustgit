@@ -22,6 +22,17 @@ lazy_static! {
         git(&WORKING_DIR).rev_parse(["HEAD"]).unwrap();
 }
 
+// git rev-parse <sha1>
+#[test]
+fn sha1() {
+    let sha1 = "e9fd0d28a8db6bf20521abb3f13e840cb963def1";
+    rustgit(&WORKING_DIR)
+        .args(["rev-parse", sha1])
+        .assert()
+        .success()
+        .stdout(predicate::str::starts_with(sha1));
+}
+
 // git rev-parse HEAD
 #[test]
 fn head() {
