@@ -1,4 +1,4 @@
-use crate::object::Object;
+use crate::object::ObjectBuffer;
 use crate::utils::trim_whitespace;
 use anyhow::Context;
 use sha1::Digest;
@@ -25,8 +25,8 @@ fn byte2hex(byte: u8) -> (u8, u8) {
 
 impl Sha1Hash {
     /// Compute a hash from a git object
-    pub fn from_object(object: &Object) -> Self {
-        Self::from_data(&object.data)
+    pub fn from_object(object: &ObjectBuffer) -> Self {
+        Self::from_data(&object.data())
     }
 
     pub fn from_data(data: &[u8]) -> Self {
@@ -74,7 +74,13 @@ impl Sha1HashHexString {
         Self::from_u8_slice(s.as_bytes())
     }
     pub fn from_u8_slice(bytes: &[u8]) -> anyhow::Result<Self> {
-        let data: [u8; 40] = trim_whitespace(bytes).try_into()?;
+        let data: [u8; 40] = trim_whitespace(bytes).try_into().with_context(|| {
+            format!(
+                "Byte slice is not a valid sha1 hash. It has a length of {}",
+                bytes.len()
+            )
+        })?;
+        // TODO: validate the result
         Ok(Sha1HashHexString(data))
     }
 }
@@ -103,7 +109,7 @@ impl std::ops::Deref for Sha1HashHexString {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::object::{Object, ObjectType};
+    use crate::object::{ObjectBuffer, ObjectType};
 
     #[test]
     fn from_unvalidated_hex_string() {
@@ -121,7 +127,7 @@ mod tests {
 
     #[test]
     fn from_object() {
-        let blob = Object::new(ObjectType::Blob, "hello world\n".as_bytes());
+        let blob = ObjectBuffer::new(ObjectType::Blob, "hello world\n".as_bytes());
 
         assert_eq!(
             &Sha1Hash::from_object(&blob).to_string(),

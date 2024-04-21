@@ -1,8 +1,9 @@
 use crate::parse_util::parse_usize;
+use crate::repository::Repository;
 use anyhow::Context;
 use clap::Args;
 use flate2::read::ZlibDecoder;
-use rustgit_plumbing::{hash::Sha1Hash, object::object_path_from_hash, utils::remove_last};
+use rustgit_plumbing::{hash::Sha1Hash, utils::remove_last};
 use std::{
     fs::File,
     io::{prelude::*, BufReader, Write},
@@ -19,9 +20,11 @@ pub struct CatFileArgs {
 pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
     assert!(args.pretty_print, "Only works with -p now");
 
+    let repository = Repository::search_and_open()?;
+
     // TODO: support shortest unique object hashes
     let object_hash = Sha1Hash::from_unvalidated_hex_string(&args.object_hash)?;
-    let path = object_path_from_hash(&object_hash.to_hex_string());
+    let path = repository.object_path_from_hash(object_hash);
 
     let file = File::open(&path)?;
     let mut decoder = BufReader::new(ZlibDecoder::new(&file));

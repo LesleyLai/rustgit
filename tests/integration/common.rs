@@ -1,7 +1,7 @@
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 use rustgit_plumbing::hash::Sha1HashHexString;
-use rustgit_plumbing::utils::trim_whitespace;
+use std::str::from_utf8;
 use std::{
     ffi::OsStr,
     fs,
@@ -69,9 +69,9 @@ impl GitCommand {
     }
 
     pub(crate) fn write_tree(mut self) -> anyhow::Result<Sha1HashHexString> {
-        let output = self.args(["write-tree"]).output()?;
-        anyhow::ensure!(output.status.success());
-        Sha1HashHexString::from_u8_slice(trim_whitespace(&output.stdout))
+        let assert = self.args(["write-tree"]).assert().success();
+        println!("{}", from_utf8(&assert.get_output().stdout).unwrap());
+        Sha1HashHexString::from_u8_slice(&assert.get_output().stdout)
     }
 
     pub(crate) fn rev_parse<I, S>(mut self, args: I) -> anyhow::Result<Sha1HashHexString>
@@ -81,7 +81,7 @@ impl GitCommand {
     {
         let output = self.0.arg("rev-parse").args(args).output()?;
         anyhow::ensure!(output.status.success());
-        Sha1HashHexString::from_u8_slice(trim_whitespace(&output.stdout))
+        Sha1HashHexString::from_u8_slice(&output.stdout)
     }
 
     pub(crate) fn stage(mut self, dir: &str) {

@@ -1,7 +1,9 @@
+use crate::repository::Repository;
+use crate::write_utils::write_object;
 use anyhow::Context;
 use clap::Args;
 use rustgit_plumbing::hash::Sha1Hash;
-use rustgit_plumbing::object::{write_object, Object, ObjectType};
+use rustgit_plumbing::object::{ObjectBuffer, ObjectType};
 use std::fs;
 use std::io::Read;
 
@@ -34,12 +36,14 @@ pub fn hash_object(args: HashObjectArgs) -> anyhow::Result<()> {
         fs::read_to_string(args.group.filename.unwrap())?
     };
 
-    let blob = Object::new(ObjectType::Blob, body.as_bytes());
+    let blob = ObjectBuffer::new(ObjectType::Blob, body.as_bytes());
     let object_hash = Sha1Hash::from_object(&blob);
     println!("{}", object_hash.to_hex_string());
 
     if args.perform_write {
-        write_object(&blob.data, &object_hash)?;
+        let repository = Repository::search_and_open()?;
+
+        write_object(&repository, &blob, object_hash)?;
     }
 
     Ok(())

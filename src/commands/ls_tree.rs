@@ -1,8 +1,8 @@
+use crate::repository::Repository;
 use anyhow::Context;
 use clap::Args;
 use flate2::read::ZlibDecoder;
 use rustgit_plumbing::hash::Sha1Hash;
-use rustgit_plumbing::object::object_path_from_hash;
 use rustgit_plumbing::utils::remove_last;
 use std::{
     fs::File,
@@ -21,12 +21,14 @@ pub struct LsTreeArgs {
 }
 
 pub fn ls_tree(args: LsTreeArgs) -> anyhow::Result<()> {
+    let repository = Repository::search_and_open()?;
+
     anyhow::ensure!(args.name_only, "Only implemented name_only for now");
 
     let tree_hash = Sha1Hash::from_unvalidated_hex_string(&args.tree_ish)?;
-    let path = object_path_from_hash(&tree_hash.to_hex_string());
+    let tree_object_path = repository.object_path_from_hash(tree_hash);
 
-    let file = File::open(&path)?;
+    let file = File::open(&tree_object_path)?;
 
     let mut decoder = BufReader::new(ZlibDecoder::new(&file));
 
