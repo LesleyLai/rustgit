@@ -1,7 +1,6 @@
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 use rustgit_plumbing::hash::Sha1HashHexString;
-use std::str::from_utf8;
 use std::{
     ffi::OsStr,
     fs,
@@ -10,11 +9,11 @@ use std::{
 };
 
 lazy_static! {
-     pub(crate) static ref TEST_DIR: PathBuf = {
+    pub(crate) static ref TEST_DIR: PathBuf = {
         let temp_dir = std::env::temp_dir();
         let dir = temp_dir.join("rustgit_tests");
 
-        let _ = fs::remove_dir_all(&dir); // suppress error
+        fs::remove_dir_all(&dir).expect("Failed to clear the test directory");
         fs::create_dir(&dir).unwrap();
         dir
     };
@@ -70,7 +69,6 @@ impl GitCommand {
 
     pub(crate) fn write_tree(mut self) -> anyhow::Result<Sha1HashHexString> {
         let assert = self.args(["write-tree"]).assert().success();
-        println!("{}", from_utf8(&assert.get_output().stdout).unwrap());
         Sha1HashHexString::from_u8_slice(&assert.get_output().stdout)
     }
 

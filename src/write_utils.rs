@@ -5,7 +5,7 @@ use rustgit_plumbing::{hash::Sha1Hash, object::ObjectBuffer};
 use std::fs;
 
 /// Given full data of a git object and its Sha1 hash, write it to disk
-pub fn write_object(
+pub(crate) fn write_object(
     repository: &Repository,
     object_buffer: &ObjectBuffer,
     object_hash: Sha1Hash,
@@ -15,8 +15,8 @@ pub fn write_object(
 
     // TODO: write to a temporary object first
 
-    let tree_object_path = repository.object_path_from_hash(object_hash);
-    fs::create_dir_all(tree_object_path.parent().unwrap()).with_context(|| {
+    let object_path = repository.object_path_from_hash(object_hash);
+    fs::create_dir_all(object_path.parent().unwrap()).with_context(|| {
         format!(
             "Failed to create parent directory for object {}",
             object_hash
@@ -29,20 +29,21 @@ pub fn write_object(
 
     // TODO: make sure that the object file doesn't already exist
 
-    let mut file = fs::File::create(&tree_object_path)
-        .with_context(|| format!("Failed to create file at {}", &tree_object_path.display()))?;
+    let mut file = fs::File::create(&object_path)
+        .with_context(|| format!("Failed to create file at {}", &object_path.display()))?;
     file.write_all(&output)
-        .with_context(|| format!("fail to writing file to {}", &tree_object_path.display()))?;
+        .with_context(|| format!("fail to writing file to {}", &object_path.display()))?;
 
     Ok(())
 }
 
 // Recursively create a tree object and return the tree SHA
 // TODO: should write index rather than a directory
-pub fn write_tree(repository: &Repository, path: &std::path::Path) -> anyhow::Result<Sha1Hash> {
-    // TODO: windows support
+pub(crate) fn write_tree(
+    repository: &Repository,
+    path: &std::path::Path,
+) -> anyhow::Result<Sha1Hash> {
     use std::io::Write;
-    use std::os::unix::fs::PermissionsExt;
 
     assert!(path.is_dir());
 
@@ -55,17 +56,18 @@ pub fn write_tree(repository: &Repository, path: &std::path::Path) -> anyhow::Re
     entries.sort_by(|e1, e2| e1.path().cmp(&e2.path()));
 
     for entry in entries {
-        let mut mode = fs::metadata(&entry.path())?.permissions().mode();
+        let mode;
         let name = entry.file_name();
 
         let child_path = entry.path();
 
         let object_hash = if child_path.is_file() {
-            // create a blob object
+            // TODO: ensures that the objects exist in the object database
+            mode = 0o100644;
+
             let content = fs::read_to_string(child_path.to_str().unwrap())?;
             let blob = ObjectBuffer::new(ObjectType::Blob, content.as_bytes());
             let object_hash = Sha1Hash::from_object(&blob);
-            write_object(repository, &blob, object_hash)?;
 
             object_hash
         } else if child_path.is_dir() {
