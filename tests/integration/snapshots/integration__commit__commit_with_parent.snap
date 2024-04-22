@@ -1,0 +1,15 @@
+---
+source: tests/integration/commit.rs
+expression: log
+---
+commit [sha1]
+Author: [name] <[email]>
+Date: [date]
+
+    another commit
+
+commit [sha1]
+Author: [name] <[email]>
+Date: [date]
+
+    initial commit

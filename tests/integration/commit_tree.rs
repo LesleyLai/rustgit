@@ -1,15 +1,6 @@
-use crate::common::{git, populate_folder, rustgit, test_path, with_common_insta_settings};
-use assert_cmd::prelude::*;
+use crate::common::{git, head_sha, populate_folder, rustgit, test_path, InstaSettingsExt};
 use rustgit_plumbing::hash::Sha1HashHexString;
-use std::{fs, path::Path};
-
-fn head_sha(working_dir: &Path) -> anyhow::Result<Sha1HashHexString> {
-    let hash = git(working_dir)
-        .args(["rev-parse", "HEAD"])
-        .output()?
-        .stdout;
-    Sha1HashHexString::from_u8_slice(&hash)
-}
+use std::fs;
 
 // rustgit commit-tree <tree_sha> -p <commit_sha> -m <message>
 #[test]
@@ -23,10 +14,7 @@ fn with_parent() -> anyhow::Result<()> {
     git(&working_dir).stage(".");
 
     // Initial commit
-    git(&working_dir)
-        .args(["commit", "-m", "\"initial commit\""])
-        .assert()
-        .success();
+    git(&working_dir).commit("initial commit");
 
     // get last commit sha
     let parent_commit_hash = head_sha(&working_dir)?;
@@ -60,15 +48,14 @@ fn with_parent() -> anyhow::Result<()> {
 
     let catfile_output = std::str::from_utf8(&output.stdout).unwrap();
 
-    with_common_insta_settings(|| {
-        let mut settings = insta::Settings::clone_current();
-        settings.add_filter(
-            r" .* <.*@.*\..*> \d{10} [+|-]\d{4}",
-            " [name] <[email]> [date_seconds] [timezone]",
-        );
-        settings.bind(|| {
-            insta::assert_snapshot!(catfile_output);
-        });
+    let mut settings = insta::Settings::clone_current();
+    settings.add_sha1_filter();
+    settings.add_filter(
+        r" .* <.*@.*\..*> \d{10} [+|-]\d{4}",
+        " [name] <[email]> [date_seconds] [timezone]",
+    );
+    settings.bind(|| {
+        insta::assert_snapshot!(catfile_output);
     });
 
     Ok(())

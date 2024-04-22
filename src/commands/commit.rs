@@ -19,14 +19,31 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
     // git write-tree
     let tree_sha = crate::write_utils::write_tree(&repository, &working_dir)?;
 
+    let repository_path = repository.repository_directory;
+
+    // get current commit
+    let parent_commit_sha = rustgit_plumbing::references::get_head_hash(&repository_path)?;
+
     // git commit-tree
-    let _commit_sha = commit_tree(CommitTreeArgs {
-        parent_commit_sha: None,
+    let commit_sha = commit_tree(CommitTreeArgs {
+        parent_commit_sha,
         message,
         tree_sha,
     })?;
 
-    // TODO: git update-ref for the current branch
+    // update-ref for the current branch
+    let head_content = std::fs::read_to_string(repository_path.join(".git").join("HEAD"))?;
+
+    if head_content.starts_with("ref: ") {
+        let reference = head_content[5..].trim();
+        std::fs::write(
+            repository_path.join(".git").join(reference),
+            &commit_sha.to_hex_string().0,
+        )?;
+    } else {
+        // TODO: detached head
+        anyhow::bail!("`rustgit commit` on detached head is not supported");
+    }
 
     Ok(())
 }

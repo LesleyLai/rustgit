@@ -82,6 +82,11 @@ impl GitCommand {
         Sha1HashHexString::from_u8_slice(&output.stdout)
     }
 
+    pub(crate) fn log(mut self) -> String {
+        let git_log_command = self.0.arg("log").assert().success();
+        String::from_utf8_lossy(&git_log_command.get_output().stdout).to_string()
+    }
+
     pub(crate) fn stage(mut self, dir: &str) {
         self.args(["stage", dir]).assert().success();
     }
@@ -121,10 +126,20 @@ pub(crate) fn populate_folder(dir: &Path) {
     fs::write(&file4, "file_in_dir2").unwrap();
 }
 
-pub(crate) fn with_common_insta_settings(f: impl FnOnce() -> ()) {
-    insta::with_settings!({filters => vec![
-        (r"\b[[:xdigit:]]{40}\b", "[sha1]"),
-    ]}, {
-        f()
-    })
+pub(crate) trait InstaSettingsExt {
+    fn add_sha1_filter(&mut self);
+}
+
+impl InstaSettingsExt for insta::Settings {
+    fn add_sha1_filter(&mut self) {
+        self.add_filter(r"\b[[:xdigit:]]{40}\b", "[sha1]");
+    }
+}
+
+pub(crate) fn head_sha(working_dir: &Path) -> anyhow::Result<Sha1HashHexString> {
+    let hash = git(working_dir)
+        .args(["rev-parse", "HEAD"])
+        .output()?
+        .stdout;
+    Sha1HashHexString::from_u8_slice(&hash)
 }
