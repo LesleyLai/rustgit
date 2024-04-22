@@ -16,6 +16,11 @@ pub(crate) fn write_object(
     // TODO: write to a temporary object first
 
     let object_path = repository.object_path_from_hash(object_hash);
+    if object_path.exists() {
+        // already exist. Quit
+        return Ok(());
+    }
+
     fs::create_dir_all(object_path.parent().unwrap()).with_context(|| {
         format!(
             "Failed to create parent directory for object {}",
@@ -26,8 +31,6 @@ pub(crate) fn write_object(
     let mut encoder = ZlibEncoder::new(object_buffer.data(), Default::default());
     let mut output = vec![];
     encoder.read_to_end(&mut output)?;
-
-    // TODO: make sure that the object file doesn't already exist
 
     let mut file = fs::File::create(&object_path)
         .with_context(|| format!("Failed to create file at {}", &object_path.display()))?;
