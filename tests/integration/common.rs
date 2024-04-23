@@ -1,6 +1,7 @@
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 use rustgit_plumbing::hash::Sha1HashHexString;
+use std::str::from_utf8;
 use std::{
     ffi::OsStr,
     fs,
@@ -55,6 +56,15 @@ impl GitCommand {
         GitCommand(command)
     }
 
+    pub fn env<K, V>(mut self, key: K, val: V) -> Self
+    where
+        K: AsRef<OsStr>,
+        V: AsRef<OsStr>,
+    {
+        self.0.env(key, val);
+        self
+    }
+
     pub(crate) fn args<I, S>(&mut self, args: I) -> &mut Command
     where
         I: IntoIterator<Item = S>,
@@ -91,8 +101,36 @@ impl GitCommand {
         self.args(["stage", dir]).assert().success();
     }
 
+    pub(crate) fn commit_tree(
+        mut self,
+        tree_hash: Sha1HashHexString,
+        parent_hash: Option<Sha1HashHexString>,
+        msg: &str,
+    ) -> Sha1HashHexString {
+        let commit_tree = self.0.args(["commit-tree", &tree_hash, "-m", msg]);
+        if let Some(parent_hash) = parent_hash {
+            commit_tree.args(["-p", &parent_hash]);
+        }
+
+        let commit_tree = commit_tree.assert().success();
+
+        Sha1HashHexString::from_u8_slice(&commit_tree.get_output().stdout)
+            .expect("commit-tree does not give back a valid sha1")
+    }
+
     pub(crate) fn commit(mut self, msg: &str) {
         self.args(["commit", "-m", msg]).assert().success();
+    }
+
+    pub(crate) fn cat_file<I, S>(mut self, args: I) -> String
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        let cat_file = self.0.arg("cat-file").args(args).assert().success();
+        from_utf8(&cat_file.get_output().stdout)
+            .expect("output of cat-file is not valid utf8")
+            .to_string()
     }
 }
 

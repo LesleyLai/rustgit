@@ -2,6 +2,7 @@
 
 use crate::hash::Sha1Hash;
 use anyhow::Context;
+use std::env::VarError;
 use std::fmt::{Display, Formatter};
 use std::fs;
 
@@ -90,6 +91,15 @@ pub struct CommitTreeArgs {
     pub tree_sha: Sha1Hash,
 }
 
+fn get_env_var(key: &str) -> anyhow::Result<Option<String>> {
+    let str = match std::env::var(key) {
+        Ok(name) => Some(name),
+        Err(VarError::NotPresent) => None,
+        Err(VarError::NotUnicode(_)) => anyhow::bail!("${} is invalid utf-8", key),
+    };
+    Ok(str)
+}
+
 /// Commit a tree and returns commit sha
 pub fn commit_tree(args: CommitTreeArgs) -> anyhow::Result<Sha1Hash> {
     let mut content = String::new();
@@ -98,10 +108,14 @@ pub fn commit_tree(args: CommitTreeArgs) -> anyhow::Result<Sha1Hash> {
         content.push_str(&format!("parent {parent_commit_sha}\n"));
     }
 
+    let author_name = get_env_var("GIT_AUTHOR_NAME")?.unwrap_or("lesley lai".to_string());
+    let author_email =
+        get_env_var("GIT_AUTHOR_EMAIL")?.unwrap_or("lesley@lesleylai.info".to_string());
+
     // TODO: don't hardcode author names
     content.push_str(&format!(
-        "author Lesley Lai <lesley@lesleylai.info> 1243040974 -0700
-committer Lesley Lai <lesley@lesleylai.info> 1243040974 -0700
+        "author {author_name} <{author_email}> 1243040974 -0700
+committer {author_name} <{author_email}> 1243040974 -0700
 
 {}
 ",

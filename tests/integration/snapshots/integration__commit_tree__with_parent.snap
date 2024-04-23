@@ -8,4 +8,4 @@ parent [sha1]
 author [name] <[email]> [date_seconds] [timezone]
 committer [name] <[email]> [date_seconds] [timezone]
 
-"another commit"
+another commit
