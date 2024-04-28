@@ -1,7 +1,7 @@
 ---
-source: tests/integration/commit_tree.rs
+source: tests/integration/commands/commit_tree.rs
 assertion_line: 71
-expression: catfile_output
+expression: output
 ---
 tree [sha1]
 parent [sha1]

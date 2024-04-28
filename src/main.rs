@@ -1,4 +1,5 @@
 mod commands;
+mod lockfile;
 mod parse_util;
 mod repository;
 mod write_utils;

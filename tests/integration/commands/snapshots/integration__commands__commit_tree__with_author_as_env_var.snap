@@ -1,7 +1,7 @@
 ---
-source: tests/integration/commit_tree.rs
-assertion_line: 38
-expression: catfile_output
+source: tests/integration/commands/commit_tree.rs
+assertion_line: 28
+expression: output
 ---
 tree [sha1]
 author Jane Doe <jane@doe.com> [date_seconds] [timezone]

@@ -1,5 +1,6 @@
 ---
-source: tests/integration/commit.rs
+source: tests/integration/commands/commit.rs
+assertion_line: 30
 expression: log
 ---
 commit [sha1]

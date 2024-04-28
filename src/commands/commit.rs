@@ -31,6 +31,7 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
         tree_sha,
     })?;
 
+    // TODO: lock
     // update-ref for the current branch
     let head_content = std::fs::read_to_string(repository_path.join(".git").join("HEAD"))?;
 

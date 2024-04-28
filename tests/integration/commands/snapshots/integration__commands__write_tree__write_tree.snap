@@ -1,5 +1,5 @@
 ---
-source: tests/integration/write_tree.rs
+source: tests/integration/commands/write_tree.rs
 assertion_line: 22
 expression: output
 ---
