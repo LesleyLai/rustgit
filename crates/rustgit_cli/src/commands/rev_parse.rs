@@ -1,8 +1,7 @@
 use clap::Args;
-use rustgit_plumbing::hash::Sha1HashHexString;
+use rustgit::hash::Sha1HashHexString;
 
-use crate::repository::Repository;
-use rustgit_plumbing::references::get_head_hash;
+use rustgit::{references::get_head_hash, Repository};
 
 #[derive(Args, Debug)]
 pub struct RevParseArgs {

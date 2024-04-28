@@ -1,11 +1,12 @@
-use crate::repository::Repository;
-use crate::write_utils::write_object;
 use anyhow::Context;
 use clap::Args;
-use rustgit_plumbing::hash::Sha1Hash;
-use rustgit_plumbing::object::{ObjectBuffer, ObjectType};
-use std::fs;
-use std::io::Read;
+use rustgit::write_utils::write_object;
+use rustgit::{
+    hash::Sha1Hash,
+    object::{ObjectBuffer, ObjectType},
+    Repository,
+};
+use std::{fs, io::Read};
 
 #[derive(Args, Debug)]
 #[group(required = true, multiple = false)]

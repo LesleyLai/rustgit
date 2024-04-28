@@ -9,6 +9,7 @@ struct LockFile {
 
 impl LockFile {
     /// path: A path without .lock extension
+    #[allow(dead_code)]
     fn new(path: &Path) -> Result<LockFile, LockFileError> {
         let lock_path = path.with_extension("lock");
         let maybe_file = File::options()
@@ -37,12 +38,14 @@ impl Drop for LockFile {
 
 // Error Handling
 #[derive(Debug)]
+#[allow(dead_code)]
 enum LockFileErrorKind {
     LockTaken,
     Io,
 }
 
 #[derive(Debug, Error)]
+#[allow(dead_code)]
 struct LockFileError {
     path: PathBuf,
     kind: LockFileErrorKind,
@@ -65,6 +68,7 @@ impl Display for LockFileError {
 }
 
 impl LockFileError {
+    #[allow(dead_code)]
     fn from_io(e: io::Error, path: PathBuf) -> Self {
         let kind = match e.kind() {
             io::ErrorKind::AlreadyExists => LockFileErrorKind::LockTaken,

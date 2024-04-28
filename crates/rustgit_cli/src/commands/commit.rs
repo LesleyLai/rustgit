@@ -1,6 +1,8 @@
-use crate::repository::Repository;
 use clap::Args;
-use rustgit_plumbing::object::{commit_tree, CommitTreeArgs};
+use rustgit::{
+    object::{commit_tree, CommitTreeArgs},
+    Repository,
+};
 
 #[derive(Args, Debug)]
 pub struct CommitArgs {
@@ -17,12 +19,12 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
     // TODO: check whether we have something to commit (is working tree clean?)
 
     // git write-tree
-    let tree_sha = crate::write_utils::write_tree(&repository, &working_dir)?;
+    let tree_sha = rustgit::write_utils::write_tree(&repository, &working_dir)?;
 
     let repository_path = repository.repository_directory;
 
     // get current commit
-    let parent_commit_sha = rustgit_plumbing::references::get_head_hash(&repository_path)?;
+    let parent_commit_sha = rustgit::references::get_head_hash(&repository_path)?;
 
     // git commit-tree
     let commit_sha = commit_tree(CommitTreeArgs {

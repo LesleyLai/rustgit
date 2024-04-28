@@ -1,11 +1,11 @@
+use crate::object::ObjectType;
 use crate::repository::Repository;
+use crate::{hash::Sha1Hash, object::ObjectBuffer};
 use anyhow::Context;
-use rustgit_plumbing::object::ObjectType;
-use rustgit_plumbing::{hash::Sha1Hash, object::ObjectBuffer};
 use std::fs;
 
 /// Given full data of a git object and its Sha1 hash, write it to disk
-pub(crate) fn write_object(
+pub fn write_object(
     repository: &Repository,
     object_buffer: &ObjectBuffer,
     object_hash: Sha1Hash,
@@ -42,10 +42,7 @@ pub(crate) fn write_object(
 
 // Recursively create a tree object and return the tree SHA
 // TODO: should write index rather than a directory
-pub(crate) fn write_tree(
-    repository: &Repository,
-    path: &std::path::Path,
-) -> anyhow::Result<Sha1Hash> {
+pub fn write_tree(repository: &Repository, path: &std::path::Path) -> anyhow::Result<Sha1Hash> {
     use std::io::Write;
 
     assert!(path.is_dir());

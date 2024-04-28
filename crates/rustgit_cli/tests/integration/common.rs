@@ -1,0 +1,188 @@
+use assert_cmd::prelude::*;
+use lazy_static::lazy_static;
+use rustgit::hash::Sha1HashHexString;
+use std::str::from_utf8;
+use std::{
+    ffi::OsStr,
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
+
+lazy_static! {
+    pub(crate) static ref TEST_DIR: PathBuf = {
+        let temp_dir = std::env::temp_dir();
+        let dir = temp_dir.join("rustgit_tests");
+
+        fs::remove_dir_all(&dir).expect("Failed to clear the test directory");
+        fs::create_dir(&dir).unwrap();
+        dir
+    };
+}
+
+// Copied from stdext
+macro_rules! function_name {
+    () => {{
+        // Okay, this is ugly, I get it. However, this is the best we can get on a stable rust.
+        fn f() {}
+        fn type_name_of<T>(_: T) -> &'static str {
+            std::any::type_name::<T>()
+        }
+        let name = type_name_of(f);
+        // `3` is the length of the `::f`.
+        &name[..name.len() - 3]
+    }};
+}
+pub(crate) use function_name;
+
+/// Generate a unique temporary working directory for each path
+macro_rules! test_path {
+    () => {{
+        use crate::common::{function_name, TEST_DIR};
+
+        let mut function_name: &str = &function_name!()[13..];
+        if let Some(name) = function_name.strip_prefix("commands::") {
+            function_name = name;
+        }
+
+        let directory = function_name.replace("::", "_");
+        let path = TEST_DIR.join(directory);
+        std::fs::create_dir(&path).unwrap();
+        path
+    }};
+}
+pub(crate) use test_path;
+
+pub(crate) struct GitCommand(Command);
+
+impl GitCommand {
+    fn new(mut command: Command, working_dir: &Path) -> Self {
+        command.current_dir(&working_dir);
+        GitCommand(command)
+    }
+
+    pub fn env<K, V>(mut self, key: K, val: V) -> Self
+    where
+        K: AsRef<OsStr>,
+        V: AsRef<OsStr>,
+    {
+        self.0.env(key, val);
+        self
+    }
+
+    pub(crate) fn args<I, S>(&mut self, args: I) -> &mut Command
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        self.0.args(args)
+    }
+
+    pub(crate) fn init(mut self) {
+        self.args(["init"]).assert().success();
+    }
+
+    pub(crate) fn write_tree(mut self) -> anyhow::Result<Sha1HashHexString> {
+        let assert = self.args(["write-tree"]).assert().success();
+        Sha1HashHexString::from_u8_slice(&assert.get_output().stdout)
+    }
+
+    pub(crate) fn rev_parse<I, S>(mut self, args: I) -> anyhow::Result<Sha1HashHexString>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        let output = self.0.arg("rev-parse").args(args).output()?;
+        anyhow::ensure!(output.status.success());
+        Sha1HashHexString::from_u8_slice(&output.stdout)
+    }
+
+    pub(crate) fn log(mut self) -> String {
+        let git_log_command = self.0.arg("log").assert().success();
+        String::from_utf8_lossy(&git_log_command.get_output().stdout).to_string()
+    }
+
+    pub(crate) fn stage(mut self, dir: &str) {
+        self.args(["stage", dir]).assert().success();
+    }
+
+    pub(crate) fn commit_tree(
+        mut self,
+        tree_hash: Sha1HashHexString,
+        parent_hash: Option<Sha1HashHexString>,
+        msg: &str,
+    ) -> Sha1HashHexString {
+        let commit_tree = self.0.args(["commit-tree", &tree_hash, "-m", msg]);
+        if let Some(parent_hash) = parent_hash {
+            commit_tree.args(["-p", &parent_hash]);
+        }
+
+        let commit_tree = commit_tree.assert().success();
+
+        Sha1HashHexString::from_u8_slice(&commit_tree.get_output().stdout)
+            .expect("commit-tree does not give back a valid sha1")
+    }
+
+    pub(crate) fn commit(mut self, msg: &str) {
+        self.args(["commit", "-m", msg]).assert().success();
+    }
+
+    pub(crate) fn cat_file<I, S>(mut self, args: I) -> String
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        let cat_file = self.0.arg("cat-file").args(args).assert().success();
+        from_utf8(&cat_file.get_output().stdout)
+            .expect("output of cat-file is not valid utf8")
+            .to_string()
+    }
+}
+
+/// Create a command for the real git
+pub(crate) fn git(working_dir: &Path) -> GitCommand {
+    let command = Command::new("git");
+    GitCommand::new(command, &working_dir)
+}
+
+/// Create a command for rustgit
+pub(crate) fn rustgit(working_dir: &Path) -> GitCommand {
+    let command = Command::cargo_bin("rustgit").expect("Cannot find rustgit executable");
+    GitCommand::new(command, &working_dir)
+}
+
+/// Populate the current folder with some files for testing
+pub(crate) fn populate_folder(dir: &Path) {
+    let file1 = dir.join("file1.txt");
+    fs::write(&file1, "hello").unwrap();
+
+    let dir1 = dir.join("dir1");
+    fs::create_dir(&dir1).unwrap();
+    let file2 = dir1.join("file_in_dir1_1");
+    let file3 = dir1.join("file_in_dir1_2");
+    fs::write(&file2, "file_in_dir1").unwrap();
+    fs::write(&file3, "file_in_dir1 2").unwrap();
+
+    let dir2 = dir.join("dir2");
+    fs::create_dir(&dir2).unwrap();
+    let file4 = dir2.join("file_in_dir2_1");
+    fs::write(&file4, "file_in_dir2").unwrap();
+}
+
+pub(crate) trait InstaSettingsExt {
+    fn add_sha1_filter(&mut self);
+}
+
+impl InstaSettingsExt for insta::Settings {
+    fn add_sha1_filter(&mut self) {
+        self.add_filter(r"\b[[:xdigit:]]{40}\b", "[sha1]");
+    }
+}
+
+pub(crate) fn head_sha(working_dir: &Path) -> anyhow::Result<Sha1HashHexString> {
+    let hash = git(working_dir)
+        .args(["rev-parse", "HEAD"])
+        .output()?
+        .stdout;
+    Sha1HashHexString::from_u8_slice(&hash)
+}

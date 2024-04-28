@@ -3,7 +3,7 @@ use crate::common::{git, populate_folder, rustgit, TEST_DIR};
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 use predicates::prelude::predicate;
-use rustgit_plumbing::hash::Sha1HashHexString;
+use rustgit::hash::Sha1HashHexString;
 use std::{fs, path::PathBuf};
 
 lazy_static! {

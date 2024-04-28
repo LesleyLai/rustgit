@@ -1,7 +1,7 @@
 use crate::common::{git, rustgit, test_path};
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use rustgit_plumbing::hash::Sha1HashHexString;
+use rustgit::hash::Sha1HashHexString;
 
 // cat-file -p <blob>
 #[test]

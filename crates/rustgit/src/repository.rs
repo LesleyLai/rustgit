@@ -1,7 +1,7 @@
 use std::path::PathBuf;
-
-use rustgit_plumbing::hash::Sha1Hash;
 use thiserror::Error;
+
+use crate::hash::Sha1Hash;
 
 /// Abstraction for a Git Repository
 pub struct Repository {
