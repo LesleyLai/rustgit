@@ -1,3 +1,4 @@
+use crate::is_executable::IsExecutable;
 use crate::object::ObjectType;
 use crate::repository::Repository;
 use crate::{hash::Sha1Hash, object::ObjectBuffer};
@@ -63,7 +64,12 @@ pub fn write_tree(repository: &Repository, path: &std::path::Path) -> anyhow::Re
 
         let object_hash = if child_path.is_file() {
             // TODO: ensures that the objects exist in the object database
-            mode = 0o100644;
+
+            mode = if child_path.is_executable() {
+                0o100755
+            } else {
+                0o100644
+            };
 
             let content = fs::read_to_string(child_path.to_str().unwrap())?;
             let blob = ObjectBuffer::new(ObjectType::Blob, content.as_bytes());
