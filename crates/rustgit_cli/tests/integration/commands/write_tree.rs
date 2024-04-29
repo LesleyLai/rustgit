@@ -1,6 +1,7 @@
-use crate::common::{git, populate_folder, rustgit, test_path};
+use crate::common::{git, populate_folder, rustgit};
 use assert_cmd::prelude::*;
 use std::str::from_utf8;
+use test_utils::test_path;
 
 #[test]
 fn write_tree() -> anyhow::Result<()> {

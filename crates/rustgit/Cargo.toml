@@ -12,3 +12,6 @@ sha1 = "0.10.6"                                      # hashing
 hex = "0.4.3"                                        # working with hash output
 flate2 = "1.0"                                    # gzip compression
 thiserror = "1.0.58"
+
+[dev-dependencies]
+test_utils = { path = "../test_utils" }

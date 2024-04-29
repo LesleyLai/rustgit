@@ -1,5 +1,6 @@
-use crate::common::{git, head_sha, populate_folder, rustgit, test_path, InstaSettingsExt};
+use crate::common::{git, head_sha, populate_folder, rustgit, InstaSettingsExt};
 use std::fs;
+use test_utils::test_path;
 
 #[test]
 fn with_author_as_env_var() -> anyhow::Result<()> {

@@ -6,5 +6,6 @@ pub mod utils;
 
 pub use crate::repository::{Repository, RepositoryInitError};
 
-mod lockfile;
+// TODO: should not be public
+pub mod lockfile;
 pub mod write_utils;

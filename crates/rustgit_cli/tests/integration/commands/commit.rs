@@ -1,5 +1,6 @@
-use crate::common::{git, populate_folder, rustgit, test_path, InstaSettingsExt};
+use crate::common::{git, populate_folder, rustgit, InstaSettingsExt};
 use std::fs;
+use test_utils::test_path;
 
 fn with_log_insta_setting<F: FnOnce() -> ()>(callback: F) {
     let mut settings = insta::Settings::clone_current();

@@ -2,7 +2,8 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::fs;
 
-use crate::common::{rustgit, test_path};
+use crate::common::rustgit;
+use test_utils::test_path;
 
 #[test]
 fn init() -> anyhow::Result<()> {

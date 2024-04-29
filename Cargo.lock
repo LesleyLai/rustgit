@@ -419,6 +419,7 @@ dependencies = [
  "flate2",
  "hex",
  "sha1",
+ "test_utils",
  "thiserror",
 ]
 
@@ -434,6 +435,7 @@ dependencies = [
  "lazy_static",
  "predicates",
  "rustgit",
+ "test_utils",
  "thiserror",
 ]
 
@@ -496,6 +498,13 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
+
+[[package]]
+name = "test_utils"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+]
 
 [[package]]
 name = "thiserror"

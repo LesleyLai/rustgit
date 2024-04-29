@@ -35,6 +35,7 @@ enum Command {
     /// Record changes to the repository
     Commit(CommitArgs),
 
+    /// Print the SHA1 hashes given a revision specifier
     RevParse(RevParseArgs),
 }
 

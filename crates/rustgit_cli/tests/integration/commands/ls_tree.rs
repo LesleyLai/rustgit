@@ -1,4 +1,5 @@
-use crate::common::{git, populate_folder, rustgit, TEST_DIR};
+use crate::common::{git, populate_folder, rustgit};
+use test_utils::TEST_DIR;
 
 use assert_cmd::prelude::*;
 use lazy_static::lazy_static;

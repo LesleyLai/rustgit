@@ -2,6 +2,8 @@ use std::path::PathBuf;
 use thiserror::Error;
 
 use crate::hash::Sha1Hash;
+use crate::lockfile::Lockfile;
+use crate::references::hash_from_reference;
 
 /// Abstraction for a Git Repository
 pub struct Repository {
@@ -49,5 +51,23 @@ impl Repository {
         self.objects_directory
             .join(std::str::from_utf8(s1).unwrap())
             .join(std::str::from_utf8(s2).unwrap())
+    }
+
+    /// Retrieve and resolve the reference pointed at by HEAD.
+    pub fn head(&self) -> anyhow::Result<Option<Sha1Hash>> {
+        let head_path = self.git_directory.join("HEAD");
+
+        let head_content = {
+            let _head_lock = Lockfile::new(&head_path)?;
+            std::fs::read_to_string(head_path)?
+        };
+
+        if head_content.starts_with("ref: ") {
+            hash_from_reference(&self.repository_directory, head_content[5..].trim())
+        } else {
+            // detached head
+            let hash = Sha1Hash::from_unvalidated_hex_string(head_content.trim())?;
+            Ok(Some(hash))
+        }
     }
 }

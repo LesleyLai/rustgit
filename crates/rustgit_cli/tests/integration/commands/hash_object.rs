@@ -1,4 +1,5 @@
-use crate::common::{git, rustgit, test_path};
+use crate::common::{git, rustgit};
+use test_utils::test_path;
 
 use assert_cmd::prelude::*;
 use predicates::prelude::*;

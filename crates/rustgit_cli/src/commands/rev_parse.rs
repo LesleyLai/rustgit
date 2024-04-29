@@ -1,7 +1,7 @@
 use clap::Args;
 use rustgit::hash::Sha1HashHexString;
 
-use rustgit::{references::get_head_hash, Repository};
+use rustgit::Repository;
 
 #[derive(Args, Debug)]
 pub struct RevParseArgs {
@@ -14,7 +14,7 @@ pub fn rev_parse(args: RevParseArgs) -> anyhow::Result<()> {
 
     let arg = args.arg;
     if arg == "HEAD" {
-        if let Some(head_hash) = get_head_hash(&repository.repository_directory)? {
+        if let Some(head_hash) = repository.head()? {
             println!("{}", head_hash)
         } else {
             anyhow::bail!("HEAD doesn't exist")

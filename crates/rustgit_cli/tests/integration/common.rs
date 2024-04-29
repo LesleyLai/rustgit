@@ -1,57 +1,7 @@
 use assert_cmd::prelude::*;
-use lazy_static::lazy_static;
 use rustgit::hash::Sha1HashHexString;
 use std::str::from_utf8;
-use std::{
-    ffi::OsStr,
-    fs,
-    path::{Path, PathBuf},
-    process::Command,
-};
-
-lazy_static! {
-    pub(crate) static ref TEST_DIR: PathBuf = {
-        let temp_dir = std::env::temp_dir();
-        let dir = temp_dir.join("rustgit_tests");
-
-        fs::remove_dir_all(&dir).expect("Failed to clear the test directory");
-        fs::create_dir(&dir).unwrap();
-        dir
-    };
-}
-
-// Copied from stdext
-macro_rules! function_name {
-    () => {{
-        // Okay, this is ugly, I get it. However, this is the best we can get on a stable rust.
-        fn f() {}
-        fn type_name_of<T>(_: T) -> &'static str {
-            std::any::type_name::<T>()
-        }
-        let name = type_name_of(f);
-        // `3` is the length of the `::f`.
-        &name[..name.len() - 3]
-    }};
-}
-pub(crate) use function_name;
-
-/// Generate a unique temporary working directory for each path
-macro_rules! test_path {
-    () => {{
-        use crate::common::{function_name, TEST_DIR};
-
-        let mut function_name: &str = &function_name!()[13..];
-        if let Some(name) = function_name.strip_prefix("commands::") {
-            function_name = name;
-        }
-
-        let directory = function_name.replace("::", "_");
-        let path = TEST_DIR.join(directory);
-        std::fs::create_dir(&path).unwrap();
-        path
-    }};
-}
-pub(crate) use test_path;
+use std::{ffi::OsStr, fs, path::Path, process::Command};
 
 pub(crate) struct GitCommand(Command);
 
