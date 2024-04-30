@@ -1,10 +1,10 @@
 // Utilities related to Git Object
 
 use crate::hash::Sha1Hash;
+use crate::write_utils::write_object;
+use crate::Repository;
 use anyhow::Context;
-use std::env::VarError;
 use std::fmt::{Display, Formatter};
-use std::fs;
 
 #[allow(dead_code)]
 #[derive(Eq, PartialEq, Copy, Clone)]
@@ -46,44 +46,7 @@ impl ObjectBuffer {
     }
 }
 
-/// Given an SHA1 hash of a git object, return back its path in .git/objects
-fn object_path_from_hash(object_hash: Sha1Hash) -> std::path::PathBuf {
-    // TODO: delete this function
-
-    // TODO: support shortest unique object hashes
-    let path = std::env::current_dir().expect("Cannot get working directory");
-    let hash_hex_string = object_hash.to_hex_string().0;
-    let (s1, s2) = hash_hex_string.split_at(2);
-    path.join(".git/objects")
-        .join(std::str::from_utf8(s1).unwrap())
-        .join(std::str::from_utf8(s2).unwrap())
-}
-
 /// Given full data of a git object and its Sha1 hash, write it to disk
-fn write_object(data: &[u8], object_hash: Sha1Hash) -> anyhow::Result<()> {
-    use flate2::read::ZlibEncoder;
-    use std::{fs::File, io::prelude::*};
-
-    // TODO: write to a temporary object first
-
-    let tree_object_path = object_path_from_hash(object_hash);
-    fs::create_dir_all(tree_object_path.parent().unwrap()).with_context(|| {
-        format!(
-            "Failed to create parent directory for object {}",
-            object_hash
-        )
-    })?;
-
-    let mut encoder = ZlibEncoder::new(data, Default::default());
-    let mut output = vec![];
-    encoder.read_to_end(&mut output)?;
-    let mut file = File::create(&tree_object_path)
-        .with_context(|| format!("Failed to create file at {}", &tree_object_path.display()))?;
-    file.write_all(&output)
-        .with_context(|| format!("fail to writing file to {}", &tree_object_path.display()))?;
-
-    Ok(())
-}
 
 pub struct CommitTreeArgs {
     pub parent_commit_sha: Option<Sha1Hash>,
@@ -92,6 +55,7 @@ pub struct CommitTreeArgs {
 }
 
 fn get_env_var(key: &str) -> anyhow::Result<Option<String>> {
+    use std::env::VarError;
     let str = match std::env::var(key) {
         Ok(name) => Some(name),
         Err(VarError::NotPresent) => None,
@@ -101,7 +65,7 @@ fn get_env_var(key: &str) -> anyhow::Result<Option<String>> {
 }
 
 /// Commit a tree and returns commit sha
-pub fn commit_tree(args: CommitTreeArgs) -> anyhow::Result<Sha1Hash> {
+pub fn commit_tree(repository: &Repository, args: CommitTreeArgs) -> anyhow::Result<Sha1Hash> {
     let mut content = String::new();
     content.push_str(&format!("tree {}\n", args.tree_sha));
     if let Some(parent_commit_sha) = &args.parent_commit_sha {
@@ -122,11 +86,9 @@ committer {author_name} <{author_email}> 1243040974 -0700
         args.message
     ));
 
-    let header = format!("commit {}\0", content.len());
-    let data = header + &content;
-
-    let hash = Sha1Hash::from_data(data.as_bytes());
-    write_object(data.as_bytes(), hash).context("failed to write commit object to disk")?;
+    let object = ObjectBuffer::new(ObjectType::Commit, &content.as_bytes());
+    let hash = Sha1Hash::from_object(&object);
+    write_object(&repository, &object, hash).context("failed to write commit object to disk")?;
 
     Ok(hash)
 }

@@ -42,7 +42,7 @@ pub fn hash_object(args: HashObjectArgs) -> anyhow::Result<()> {
     println!("{}", object_hash.to_hex_string());
 
     if args.perform_write {
-        let repository = Repository::search_and_open()?;
+        let repository = Repository::search_and_open(&std::env::current_dir()?)?;
 
         write_object(&repository, &blob, object_hash)?;
     }

@@ -13,7 +13,7 @@ pub struct CommitArgs {
 }
 
 pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
-    let repository = Repository::search_and_open()?;
+    let repository = Repository::search_and_open(&std::env::current_dir()?)?;
     let working_dir = std::env::current_dir()?;
 
     let CommitArgs { message } = args;
@@ -26,17 +26,18 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
     // get current commit
     let parent_commit_sha = repository.head()?;
 
-    let repository_path = repository.repository_directory;
-
     // git commit-tree
-    let commit_sha = commit_tree(CommitTreeArgs {
-        parent_commit_sha,
-        message,
-        tree_sha,
-    })?;
+    let commit_sha = commit_tree(
+        &repository,
+        CommitTreeArgs {
+            parent_commit_sha,
+            message,
+            tree_sha,
+        },
+    )?;
 
     // update-ref for the current branch
-    let head_path = repository_path.join(".git").join("HEAD");
+    let head_path = repository.git_directory.join("HEAD");
     let head_content = {
         let _head_lock = Lockfile::new(&head_path);
         std::fs::read_to_string(head_path)?
@@ -44,7 +45,7 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
 
     if head_content.starts_with("ref: ") {
         let reference = head_content[5..].trim();
-        let reference_path = repository_path.join(".git").join(reference);
+        let reference_path = repository.git_directory.join(reference);
         let mut reference_lock = Lockfile::new(&reference_path)?;
         reference_lock.write_all(&commit_sha.to_hex_string().0)?;
         reference_lock.commit()?;

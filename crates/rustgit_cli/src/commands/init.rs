@@ -1,13 +1,11 @@
-use std::fs;
+use rustgit::Repository;
 
 pub fn init() -> std::io::Result<()> {
-    fs::create_dir(".git")?;
-    fs::create_dir(".git/objects")?;
-    fs::create_dir(".git/refs")?;
-    fs::write(".git/HEAD", "ref: refs/heads/main\n")?;
+    let current_dir = &std::env::current_dir()?;
+    let repo = Repository::init(&current_dir)?;
     println!(
         "Initialized empty Git repository in {}",
-        std::env::current_dir()?.join(".git").display()
+        repo.git_directory.display()
     );
     Ok(())
 }

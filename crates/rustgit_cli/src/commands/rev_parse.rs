@@ -10,7 +10,7 @@ pub struct RevParseArgs {
 }
 
 pub fn rev_parse(args: RevParseArgs) -> anyhow::Result<()> {
-    let repository = Repository::search_and_open()?;
+    let repository = Repository::search_and_open(&std::env::current_dir()?)?;
 
     let arg = args.arg;
     if arg == "HEAD" {

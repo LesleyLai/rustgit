@@ -19,7 +19,7 @@ pub struct LsTreeArgs {
 }
 
 pub fn ls_tree(args: LsTreeArgs) -> anyhow::Result<()> {
-    let repository = Repository::search_and_open()?;
+    let repository = Repository::search_and_open(&std::env::current_dir()?)?;
 
     anyhow::ensure!(args.name_only, "Only implemented name_only for now");
 

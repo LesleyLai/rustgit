@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 use crate::hash::Sha1Hash;
@@ -8,7 +9,7 @@ use crate::references::hash_from_reference;
 /// Abstraction for a Git Repository
 pub struct Repository {
     pub repository_directory: PathBuf,
-    git_directory: PathBuf,
+    pub git_directory: PathBuf,
 }
 
 #[derive(Copy, Clone, Error, Debug)]
@@ -18,8 +19,23 @@ pub enum RepositorySearchError {
 }
 
 impl Repository {
-    pub fn search_and_open() -> Result<Self, RepositorySearchError> {
-        let mut repository_directory = std::env::current_dir().unwrap();
+    /// Creates a new Git repository in the given folder.
+    pub fn init(path: &Path) -> std::io::Result<Repository> {
+        let git_directory = path.join(".git");
+        fs::create_dir(&git_directory)?;
+        fs::create_dir(&git_directory.join("objects"))?;
+        fs::create_dir(&git_directory.join("refs"))?;
+        fs::write(&git_directory.join("HEAD"), "ref: refs/heads/main\n")?;
+
+        Ok(Repository {
+            repository_directory: path.to_path_buf(),
+            git_directory,
+        })
+    }
+
+    /// Upward search a git repository from a path, and open the repository if find one
+    pub fn search_and_open(path: &Path) -> Result<Self, RepositorySearchError> {
+        let mut repository_directory = path.to_path_buf();
         loop {
             if repository_directory.join(".git").exists() {
                 break;
@@ -57,7 +73,7 @@ impl Repository {
 
         let head_content = {
             let _head_lock = Lockfile::new(&head_path)?;
-            std::fs::read_to_string(head_path)?
+            fs::read_to_string(head_path)?
         };
 
         if head_content.starts_with("ref: ") {

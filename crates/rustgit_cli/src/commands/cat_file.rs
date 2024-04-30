@@ -19,7 +19,7 @@ pub struct CatFileArgs {
 pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
     assert!(args.pretty_print, "Only works with -p now");
 
-    let repository = Repository::search_and_open()?;
+    let repository = Repository::search_and_open(&std::env::current_dir()?)?;
 
     // TODO: support shortest unique object hashes
     let object_hash = Sha1Hash::from_unvalidated_hex_string(&args.object_hash)?;

@@ -1,5 +1,6 @@
 use clap::Args;
 use rustgit::hash::Sha1Hash;
+use rustgit::Repository;
 
 #[derive(Args, Debug)]
 pub struct CommitTreeArgs {
@@ -21,11 +22,15 @@ pub fn commit_tree(args: CommitTreeArgs) -> anyhow::Result<()> {
         None
     };
 
-    let commit_hash = rustgit::object::commit_tree(rustgit::object::CommitTreeArgs {
-        parent_commit_sha,
-        message: args.message,
-        tree_sha,
-    })?;
+    let repository = Repository::search_and_open(&std::env::current_dir()?)?;
+    let commit_hash = rustgit::object::commit_tree(
+        &repository,
+        rustgit::object::CommitTreeArgs {
+            parent_commit_sha,
+            message: args.message,
+            tree_sha,
+        },
+    )?;
 
     println!("{}", commit_hash);
 
