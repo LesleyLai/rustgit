@@ -3,7 +3,7 @@ use crate::object::ObjectType;
 use crate::repository::Repository;
 use crate::{hash::Sha1Hash, object::ObjectBuffer};
 use anyhow::Context;
-use std::fs;
+use std::{fs, path::Path};
 
 /// Given full data of a git object and its Sha1 hash, write it to disk
 pub fn write_object(
@@ -43,18 +43,34 @@ pub fn write_object(
 
 // Recursively create a tree object and return the tree SHA
 // TODO: should write index rather than a directory
-pub fn write_tree(repository: &Repository, path: &std::path::Path) -> anyhow::Result<Sha1Hash> {
+pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Sha1Hash> {
     use std::io::Write;
 
     assert!(path.is_dir());
 
     let mut content: Vec<u8> = vec![];
 
+    // let entries = walkdir::WalkDir::new(path).sort_by_key(|a| a.path());
+    // for entry in entries {
+    //     let entry = entry?;
+    //     println!("{}", entry.path().display());
+    // }
+
     let mut entries: Vec<_> = fs::read_dir(path)
         .context("read directory in git write-tree")?
         .map(|entry| entry.unwrap())
         .collect();
-    entries.sort_by(|e1, e2| e1.path().cmp(&e2.path()));
+    // sort entries alphabetically
+    entries.sort_by_key(|e1| {
+        if e1.path().is_dir() {
+            let mut str = e1.path().as_os_str().to_os_string();
+            // Adds trailing slash
+            str.push("/");
+            str
+        } else {
+            e1.path().as_os_str().to_os_string()
+        }
+    });
 
     for entry in entries {
         let mode;

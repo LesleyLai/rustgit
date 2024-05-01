@@ -1,3 +1,6 @@
+mod fs_utils;
+pub use fs_utils::touch;
+
 use lazy_static::lazy_static;
 use std::{fs, path::PathBuf};
 

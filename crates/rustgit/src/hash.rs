@@ -76,8 +76,9 @@ impl Sha1HashHexString {
     pub fn from_u8_slice(bytes: &[u8]) -> anyhow::Result<Self> {
         let data: [u8; 40] = trim_whitespace(bytes).try_into().with_context(|| {
             format!(
-                "Byte slice is not a valid sha1 hash. It has a length of {}",
-                bytes.len()
+                "Byte slice is not a valid sha1 hash. It has a length of {}\nContent: {}",
+                bytes.len(),
+                String::from_utf8_lossy(bytes)
             )
         })?;
         // TODO: validate the result

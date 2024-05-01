@@ -1,0 +1,7 @@
+---
+source: crates/rustgit_cli/tests/integration/commands/write_tree.rs
+assertion_line: 54
+expression: output
+---
+100644 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391	foo.txt
+040000 tree 91c9988a7a7250917d0bdea6b89e07a5cf0b3a81	foo

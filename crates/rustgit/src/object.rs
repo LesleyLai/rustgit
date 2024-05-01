@@ -72,11 +72,11 @@ pub fn commit_tree(repository: &Repository, args: CommitTreeArgs) -> anyhow::Res
         content.push_str(&format!("parent {parent_commit_sha}\n"));
     }
 
+    // TODO: don't hardcode author names
     let author_name = get_env_var("GIT_AUTHOR_NAME")?.unwrap_or("lesley lai".to_string());
     let author_email =
         get_env_var("GIT_AUTHOR_EMAIL")?.unwrap_or("lesley@lesleylai.info".to_string());
 
-    // TODO: don't hardcode author names
     content.push_str(&format!(
         "author {author_name} <{author_email}> 1243040974 -0700
 committer {author_name} <{author_email}> 1243040974 -0700
