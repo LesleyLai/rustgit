@@ -48,14 +48,6 @@ pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Sha1Ha
 
     assert!(path.is_dir());
 
-    let mut content: Vec<u8> = vec![];
-
-    // let entries = walkdir::WalkDir::new(path).sort_by_key(|a| a.path());
-    // for entry in entries {
-    //     let entry = entry?;
-    //     println!("{}", entry.path().display());
-    // }
-
     let mut entries: Vec<_> = fs::read_dir(path)
         .context("read directory in git write-tree")?
         .map(|entry| entry.unwrap())
@@ -72,6 +64,7 @@ pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Sha1Ha
         }
     });
 
+    let mut content: Vec<u8> = vec![];
     for entry in entries {
         let mode;
         let name = entry.file_name();

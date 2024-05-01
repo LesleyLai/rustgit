@@ -12,6 +12,7 @@ The objective is to develop something that can seamlessly substitute normal Git 
 |----------|---------------------------------|
 | `init`   | No support for reinitialization |
 | `commit` |                                 |
+| `status` |                                 |
 
 **Plumbing Commands**
 

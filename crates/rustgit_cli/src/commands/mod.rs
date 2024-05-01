@@ -5,6 +5,7 @@ mod hash_object;
 mod init;
 mod ls_tree;
 mod rev_parse;
+mod status;
 mod write_tree;
 
 pub use cat_file::{cat_file, CatFileArgs};
@@ -14,4 +15,5 @@ pub use hash_object::{hash_object, HashObjectArgs};
 pub use init::init;
 pub use ls_tree::{ls_tree, LsTreeArgs};
 pub use rev_parse::{rev_parse, RevParseArgs};
+pub use status::status;
 pub use write_tree::write_tree;

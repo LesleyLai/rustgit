@@ -37,13 +37,16 @@ enum Command {
 
     /// Print the SHA1 hashes given a revision specifier
     RevParse(RevParseArgs),
+
+    /// Show the working tree status
+    Status,
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() {
     let args = Cli::parse();
 
     use Command::*;
-    match args.command {
+    let result = match args.command {
         Init => init().map_err(anyhow::Error::from),
         CatFile(args) => cat_file(args),
         HashObject(args) => hash_object(args),
@@ -52,5 +55,10 @@ fn main() -> anyhow::Result<()> {
         CommitTree(args) => commit_tree(args),
         Commit(args) => commit(args),
         RevParse(args) => rev_parse(args),
+        Status => status(),
+    };
+    if let Err(e) = result {
+        eprintln!("fatal: {}", e);
+        std::process::exit(1);
     }
 }
