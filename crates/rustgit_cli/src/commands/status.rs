@@ -1,4 +1,3 @@
-use rustgit::lockfile::Lockfile;
 use rustgit::references::hash_from_reference;
 use rustgit::Repository;
 use std::env::current_dir;
@@ -10,10 +9,7 @@ pub fn status() -> anyhow::Result<()> {
 
     let head_path = repository.git_directory.join("HEAD");
 
-    let head_content = {
-        let _head_lock = Lockfile::new(&head_path)?;
-        fs::read_to_string(head_path)?
-    };
+    let head_content = fs::read_to_string(head_path)?;
 
     let head_ref = if head_content.starts_with("ref: ") {
         head_content[5..].trim()

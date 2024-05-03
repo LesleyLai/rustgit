@@ -38,10 +38,7 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
 
     // update-ref for the current branch
     let head_path = repository.git_directory.join("HEAD");
-    let head_content = {
-        let _head_lock = Lockfile::new(&head_path);
-        std::fs::read_to_string(head_path)?
-    };
+    let head_content = std::fs::read_to_string(head_path)?;
 
     if head_content.starts_with("ref: ") {
         let reference = head_content[5..].trim();

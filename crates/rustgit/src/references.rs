@@ -1,14 +1,10 @@
 use crate::hash::Sha1Hash;
-use crate::lockfile::Lockfile;
 use std::{io::ErrorKind, path::Path};
 
 pub fn hash_from_reference(git_path: &Path, reference: &str) -> anyhow::Result<Option<Sha1Hash>> {
     let ref_path = git_path.join(reference);
 
-    let ref_content_result = {
-        let _lock = Lockfile::new(&ref_path);
-        std::fs::read_to_string(&ref_path)
-    };
+    let ref_content_result = std::fs::read_to_string(&ref_path);
     if let Err(ref err) = ref_content_result {
         if err.kind() == ErrorKind::NotFound {
             return Ok(None);
