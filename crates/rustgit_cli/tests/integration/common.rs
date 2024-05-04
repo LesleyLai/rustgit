@@ -1,3 +1,4 @@
+use assert_cmd::assert::Assert;
 use assert_cmd::prelude::*;
 use rustgit::hash::Sha1HashHexString;
 use std::str::from_utf8;
@@ -20,16 +21,31 @@ impl GitCommand {
         self
     }
 
-    pub(crate) fn args<I, S>(&mut self, args: I) -> &mut Command
+    pub fn arg<S: AsRef<OsStr>>(&mut self, arg: S) -> &mut GitCommand {
+        self.0.arg(arg);
+        self
+    }
+
+    pub(crate) fn args<I, S>(&mut self, args: I) -> &mut GitCommand
     where
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
-        self.0.args(args)
+        self.0.args(args);
+        self
+    }
+
+    pub(crate) fn as_command(&mut self) -> &mut Command {
+        &mut self.0
     }
 
     pub(crate) fn init(mut self) {
-        self.args(["init"]).assert().success();
+        self.arg("init").0.assert().success();
+    }
+
+    pub(crate) fn status(mut self) -> String {
+        let assert = self.arg("status").0.assert().success();
+        from_utf8(&assert.get_output().stdout).unwrap().to_string()
     }
 
     pub(crate) fn write_tree(mut self) -> anyhow::Result<Sha1HashHexString> {
@@ -48,7 +64,7 @@ impl GitCommand {
     }
 
     pub(crate) fn log(mut self) -> String {
-        let git_log_command = self.0.arg("log").assert().success();
+        let git_log_command = self.arg("log").assert().success();
         String::from_utf8_lossy(&git_log_command.get_output().stdout).to_string()
     }
 
@@ -62,7 +78,7 @@ impl GitCommand {
         parent_hash: Option<Sha1HashHexString>,
         msg: &str,
     ) -> Sha1HashHexString {
-        let commit_tree = self.0.args(["commit-tree", &tree_hash, "-m", msg]);
+        let commit_tree = self.args(["commit-tree", &tree_hash, "-m", msg]);
         if let Some(parent_hash) = parent_hash {
             commit_tree.args(["-p", &parent_hash]);
         }
@@ -86,6 +102,12 @@ impl GitCommand {
         from_utf8(&cat_file.get_output().stdout)
             .expect("output of cat-file is not valid utf8")
             .to_string()
+    }
+}
+
+impl<'c> OutputAssertExt for &'c mut GitCommand {
+    fn assert(self) -> Assert {
+        self.0.assert()
     }
 }
 
@@ -132,6 +154,7 @@ impl InstaSettingsExt for insta::Settings {
 pub(crate) fn head_sha(working_dir: &Path) -> anyhow::Result<Sha1HashHexString> {
     let hash = git(working_dir)
         .args(["rev-parse", "HEAD"])
+        .as_command()
         .output()?
         .stdout;
     Sha1HashHexString::from_u8_slice(&hash)

@@ -1,0 +1,10 @@
+---
+source: crates/rustgit_cli/tests/integration/commands/status.rs
+assertion_line: 11
+expression: git().status()
+---
+On branch main
+
+No commits yet
+
+nothing to commit (create/copy files and use "rustgit add" to track)

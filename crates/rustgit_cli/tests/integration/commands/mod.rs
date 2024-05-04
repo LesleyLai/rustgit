@@ -5,4 +5,5 @@ mod hash_object;
 mod init;
 mod ls_tree;
 mod rev_parse;
+mod status;
 mod write_tree;

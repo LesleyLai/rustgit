@@ -70,6 +70,7 @@ fn stdin() -> anyhow::Result<()> {
     // rustgit hash-object
     let mut child_process = rustgit(&working_dir)
         .args(["hash-object", "--stdin"])
+        .as_command()
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()?;

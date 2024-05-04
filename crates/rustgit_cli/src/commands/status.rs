@@ -3,6 +3,15 @@ use rustgit::Repository;
 use std::env::current_dir;
 use std::fs;
 
+fn print_nothing_to_commit(has_no_commit_yet: bool) {
+    print!("nothing to commit");
+    if has_no_commit_yet {
+        println!(" (create/copy files and use \"rustgit add\" to track)");
+    } else {
+        println!(", working tree clean");
+    }
+}
+
 pub fn status() -> anyhow::Result<()> {
     let repository = Repository::search_and_open(&current_dir()?)
         .map_err(|_| anyhow::anyhow!("not a git repository (or any of the parent directories)"))?;
@@ -24,11 +33,16 @@ pub fn status() -> anyhow::Result<()> {
 
     println!("On branch {}", branch);
 
-    if let None = hash_from_reference(&repository.git_directory, &head_ref)? {
+    let has_no_commit_yet = matches!(
+        hash_from_reference(&repository.git_directory, &head_ref)?,
+        None
+    );
+
+    if has_no_commit_yet {
         println!("\nNo commits yet\n");
     }
 
-    println!("nothing to commit (create/copy files and use \"rustgit add\" to track)");
+    print_nothing_to_commit(has_no_commit_yet);
 
     Ok(())
 }
