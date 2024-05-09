@@ -46,9 +46,10 @@ pub fn ls_files() -> anyhow::Result<()> {
             .context("failed to read header from tree object")?;
         assert_eq!(length, usize::from(path_length + 1));
 
-        let path = PathBuf::from(std::str::from_utf8(&path)?);
+        // Exclude null byte in path
+        let path = PathBuf::from(std::str::from_utf8(&path[..path.len() - 1])?);
 
-        println!("{}", path.to_string_lossy());
+        println!("{}", path.display());
 
         // consume padding bits
         reader.seek_relative(

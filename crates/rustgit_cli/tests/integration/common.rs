@@ -43,8 +43,14 @@ impl GitCommand {
         self.arg("init").0.assert().success();
     }
 
+    pub(crate) fn ls_files(mut self) -> String {
+        let assert = self.arg("ls-files").assert().success();
+
+        from_utf8(&assert.get_output().stdout).unwrap().to_string()
+    }
+
     pub(crate) fn status(mut self) -> String {
-        let assert = self.arg("status").0.assert().success();
+        let assert = self.arg("status").assert().success();
         from_utf8(&assert.get_output().stdout).unwrap().to_string()
     }
 
