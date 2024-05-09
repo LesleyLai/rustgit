@@ -10,4 +10,5 @@ pub use crate::repository::{Repository, RepositorySearchError};
 // TODO: should not be public
 mod is_executable;
 pub mod lockfile;
+pub mod read_ext;
 pub mod write_utils;

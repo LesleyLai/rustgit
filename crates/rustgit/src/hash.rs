@@ -63,6 +63,12 @@ impl Sha1Hash {
     }
 }
 
+impl Debug for Sha1Hash {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_hex_string())
+    }
+}
+
 impl Display for Sha1Hash {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_hex_string())

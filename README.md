@@ -21,6 +21,7 @@ The objective is to develop something that can seamlessly substitute normal Git 
 | `cat-file`    | currently only supports `-p`                                                      |
 | `hash-object` |                                                                                   |
 | `ls-tree`     | currently only supports `--name-only`                                             |
+| `ls-files`    |                                                                                   |
 | `write-tree`  | currently just write the whole folder without consider what's in the stage buffer |
 | `commit-tree` | currently hardcode author info                                                    |
 | `rev-parse`   | currently only work with `HEAD`                                                   |
@@ -33,6 +34,6 @@ Here are some references I used during this project
 - [Codecrafters Build your own Git challenge](https://app.codecrafters.io/courses/git)
 - [Write yourself a Git!](https://wyag.thb.lt)
 - [Building Git](https://shop.jcoglan.com/building-git/) - Most comprehensive introduction
-- [libgit2](https://libgit2.org/), [gitoxide](https://docs.rs/gix/latest/gix),
-  and [go-git](https://github.com/go-git/go-git) codebases
+- [libgit2](https://libgit2.org/), [gitoxide](https://docs.rs/gix/latest/gix), [go-git](https://github.com/go-git/go-git),
+  and [jgit](https://github.com/eclipse-jgit/jgit) codebases
 

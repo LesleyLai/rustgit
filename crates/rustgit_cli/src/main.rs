@@ -26,6 +26,9 @@ enum Command {
     /// List the contents of a tree object
     LsTree(LsTreeArgs),
 
+    /// Show information about files in the index and the working tree
+    LsFiles,
+
     /// Create a tree object from the current index
     WriteTree,
 
@@ -50,6 +53,7 @@ fn main() {
         Init => init().map_err(anyhow::Error::from),
         CatFile(args) => cat_file(args),
         HashObject(args) => hash_object(args),
+        LsFiles => ls_files(),
         LsTree(args) => ls_tree(args),
         WriteTree => write_tree(),
         CommitTree(args) => commit_tree(args),
