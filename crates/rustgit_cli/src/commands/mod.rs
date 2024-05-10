@@ -1,3 +1,4 @@
+mod add;
 mod cat_file;
 mod commit;
 mod commit_tree;
@@ -9,6 +10,7 @@ mod rev_parse;
 mod status;
 mod write_tree;
 
+pub use add::{add, AddArgs};
 pub use cat_file::{cat_file, CatFileArgs};
 pub use commit::{commit, CommitArgs};
 pub use commit_tree::{commit_tree, CommitTreeArgs};

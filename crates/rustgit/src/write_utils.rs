@@ -90,7 +90,6 @@ pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Sha1Ha
                 // Ignore .git directory!
                 continue;
             } else {
-                // For some reason mode for directory is always 40000, is that correct?
                 mode = 0o40000;
 
                 // Recurse

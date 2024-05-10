@@ -67,7 +67,7 @@ pub struct LockfileError {
 
 impl Display for LockfileError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Unable to create '{}'", self.path.display())?;
+        write!(f, "Unable to create '{}': ", self.path.display())?;
         match self.kind {
             LockfileErrorKind::LockTaken => {
                 write!(f, "File exists")
