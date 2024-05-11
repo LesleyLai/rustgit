@@ -21,13 +21,13 @@ fn parse_pathspec(pathspec: &str, current_dir: &Path, repo_path: &Path) -> anyho
     }
     let path = match path.canonicalize() {
         Err(err) if err.kind() == ErrorKind::NotFound => {
-            anyhow::bail!(format!("pathspec \'{}\' did not match any files", pathspec))
+            anyhow::bail!(format!("pathspec '{}' did not match any files", pathspec))
         }
         res => res?,
     };
     anyhow::ensure!(
         path.starts_with(repo_path),
-        "\'{}\' is outside repository",
+        "'{}' is outside repository",
         pathspec
     );
     Ok(path)

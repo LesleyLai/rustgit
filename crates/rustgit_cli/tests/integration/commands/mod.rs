@@ -1,3 +1,4 @@
+mod add;
 mod cat_file;
 mod commit;
 mod commit_tree;
