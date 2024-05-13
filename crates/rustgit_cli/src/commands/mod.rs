@@ -16,7 +16,7 @@ pub use commit::{commit, CommitArgs};
 pub use commit_tree::{commit_tree, CommitTreeArgs};
 pub use hash_object::{hash_object, HashObjectArgs};
 pub use init::init;
-pub use ls_files::ls_files;
+pub use ls_files::{ls_files, LsFilesArgs};
 pub use ls_tree::{ls_tree, LsTreeArgs};
 pub use rev_parse::{rev_parse, RevParseArgs};
 pub use status::status;

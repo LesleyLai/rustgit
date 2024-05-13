@@ -1,0 +1,9 @@
+---
+source: crates/rustgit_cli/tests/integration/commands/ls_files.rs
+assertion_line: 37
+expression: git(&working_dir).ls_files_stage()
+---
+100644 26abb69f3d99e9fff02c20c26cc0a37dcb8dac03 0	dir1/file_in_dir1_1
+100644 5a295e4de25bdc0c780038c7f422f10bc9d576e2 0	dir1/file_in_dir1_2
+100644 ba33ff4884c58070963be49d0dc801daa333040a 0	dir2/file_in_dir2_1
+100644 b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0 0	file1.txt

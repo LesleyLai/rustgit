@@ -1,7 +1,7 @@
 ---
 source: crates/rustgit_cli/tests/integration/commands/ls_files.rs
-assertion_line: 20
-expression: rustgit().ls_files()
+assertion_line: 31
+expression: rustgit(&working_dir).ls_files()
 ---
 dir1/file_in_dir1_1
 dir1/file_in_dir1_2

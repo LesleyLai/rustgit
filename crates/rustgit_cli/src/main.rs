@@ -30,7 +30,7 @@ enum Command {
     LsTree(LsTreeArgs),
 
     /// Show information about files in the index and the working tree
-    LsFiles,
+    LsFiles(LsFilesArgs),
 
     /// Create a tree object from the current index
     WriteTree,
@@ -60,7 +60,7 @@ fn main() {
         Add(args) => add(args),
         CatFile(args) => cat_file(args),
         HashObject(args) => hash_object(args),
-        LsFiles => ls_files(),
+        LsFiles(args) => ls_files(args),
         LsTree(args) => ls_tree(args),
         WriteTree => write_tree(),
         CommitTree(args) => commit_tree(args),
