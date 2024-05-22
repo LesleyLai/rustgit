@@ -1,6 +1,6 @@
 // Utilities related to Git Object
 
-use crate::hash::Sha1Hash;
+use crate::oid::ObjectId;
 use crate::write_utils::write_object;
 use crate::Repository;
 use anyhow::Context;
@@ -49,9 +49,9 @@ impl ObjectBuffer {
 /// Given full data of a git object and its Sha1 hash, write it to disk
 
 pub struct CommitTreeArgs {
-    pub parent_commit_sha: Option<Sha1Hash>,
+    pub parent_commit_sha: Option<ObjectId>,
     pub message: String,
-    pub tree_sha: Sha1Hash,
+    pub tree_sha: ObjectId,
 }
 
 fn get_env_var(key: &str) -> anyhow::Result<Option<String>> {
@@ -65,7 +65,7 @@ fn get_env_var(key: &str) -> anyhow::Result<Option<String>> {
 }
 
 /// Commit a tree and returns commit sha
-pub fn commit_tree(repository: &Repository, args: CommitTreeArgs) -> anyhow::Result<Sha1Hash> {
+pub fn commit_tree(repository: &Repository, args: CommitTreeArgs) -> anyhow::Result<ObjectId> {
     let mut content = String::new();
     content.push_str(&format!("tree {}\n", args.tree_sha));
     if let Some(parent_commit_sha) = &args.parent_commit_sha {
@@ -87,7 +87,7 @@ committer {author_name} <{author_email}> 1243040974 -0700
     ));
 
     let object = ObjectBuffer::new(ObjectType::Commit, &content.as_bytes());
-    let hash = Sha1Hash::from_object(&object);
+    let hash = ObjectId::from_object_buffer(&object);
     write_object(&repository, &object, hash).context("failed to write commit object to disk")?;
 
     Ok(hash)

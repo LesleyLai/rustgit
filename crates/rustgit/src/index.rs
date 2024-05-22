@@ -1,4 +1,4 @@
-use crate::hash::Sha1Hash;
+use crate::oid::ObjectId;
 use crate::read_ext::ReadExt;
 use anyhow::Context;
 use std::collections::BTreeMap;
@@ -9,11 +9,17 @@ use std::{
     path::{Path, PathBuf},
 };
 
+const METADATA_SIZE: usize = 40;
+const SHA_SIZE: usize = 20;
+const PATH_LEN_SIZE: usize = 2;
+
+const MIN_ENTRY_SIZE: usize = METADATA_SIZE + SHA_SIZE + PATH_LEN_SIZE;
+
 // None-path part of an entry
 #[derive(Debug, Copy, Clone)]
 struct EntryData {
     metadata: EntryMetadata,
-    oid: Sha1Hash,
+    oid: ObjectId,
 }
 
 /// Memory representation of an index file.
@@ -26,7 +32,7 @@ pub struct Index {
 #[derive(Debug, Copy, Clone)]
 pub struct EntryRef<'index> {
     pub metadata: EntryMetadata,
-    pub oid: Sha1Hash,
+    pub oid: ObjectId,
     pub path: &'index Path,
 }
 
@@ -102,6 +108,32 @@ fn write_metadata(writer: &mut impl io::Write, metadata: &EntryMetadata) -> io::
     Ok(())
 }
 
+fn write_oid(writer: &mut impl io::Write, oid: ObjectId) -> io::Result<()> {
+    writer.write(&oid.0)?;
+    Ok(())
+}
+
+// Write path and return its length
+fn write_path(writer: &mut impl io::Write, path: &Path) -> anyhow::Result<usize> {
+    let path_bytes = path.to_str().unwrap().as_bytes();
+    let path_len = path_bytes.len();
+
+    // path size
+    writer.write(&u16::to_be_bytes(u16::try_from(path_bytes.len())?))?;
+    writer.write(path_bytes)?;
+
+    Ok(path_len)
+}
+
+fn write_paddings(writer: &mut impl io::Write, path_len: usize) -> io::Result<()> {
+    let total_size = MIN_ENTRY_SIZE + path_len;
+    let padded_size = (total_size / 8 + 1) * 8;
+    for _ in 0..(padded_size - total_size) {
+        writer.write(&[0])?;
+    }
+    Ok(())
+}
+
 impl Index {
     /// Open an on-memory version of a git index from .git/index file
     ///
@@ -121,15 +153,9 @@ impl Index {
         let entry_count = read_header(&mut reader)?;
 
         for _ in 0..entry_count {
-            const METADATA_SIZE: usize = 40;
-            const SHA_SIZE: usize = 20;
-            const PATH_LEN_SIZE: usize = 2;
-
-            const MIN_ENTRY_SIZE: usize = METADATA_SIZE + SHA_SIZE + PATH_LEN_SIZE;
-
             let metadata = read_metadata(&mut reader)?;
 
-            let oid = Sha1Hash(reader.read_exact_n::<SHA_SIZE>()?);
+            let oid = ObjectId(reader.read_exact_n::<SHA_SIZE>()?);
 
             let path_length = u16::from_be_bytes(reader.read_exact_n::<2>()?);
 
@@ -163,20 +189,7 @@ impl Index {
         })
     }
 
-    pub fn add(&mut self, path: PathBuf, oid: Sha1Hash) {
-        // TODO: properly get metadata
-        let metadata = EntryMetadata {
-            ctime_seconds: 0,
-            ctime_nanoseconds: 0,
-            mtime_seconds: 0,
-            mtime_nanoseconds: 0,
-            dev: 0,
-            ino: 0,
-            mode: 0o100644,
-            uid: 0,
-            gid: 0,
-            file_size: 0,
-        };
+    pub fn add(&mut self, path: PathBuf, oid: ObjectId, metadata: EntryMetadata) {
         self.entries.insert(path, EntryData { oid, metadata });
     }
 
@@ -187,28 +200,11 @@ impl Index {
         file.write(&u32::to_be_bytes(2))?;
         file.write(&u32::to_be_bytes(entry_size))?;
 
-        // todo: write other data properly
         for (entry_path, entry_data) in &self.entries {
             write_metadata(file, &entry_data.metadata)?;
-
-            // hash
-            file.write(&entry_data.oid.0)?;
-
-            let path_bytes = entry_path.to_str().unwrap().as_bytes();
-            let path_len = path_bytes.len();
-
-            // path size
-            file.write(&u16::to_be_bytes(u16::try_from(path_bytes.len())?))?;
-
-            let total_size = 62 + path_len;
-            let padded_size = (total_size / 8 + 1) * 8;
-
-            file.write(path_bytes)?;
-
-            // write paddings
-            for _ in 0..(padded_size - total_size) {
-                file.write(&[0])?;
-            }
+            write_oid(file, entry_data.oid)?;
+            let path_len = write_path(file, &entry_path)?;
+            write_paddings(file, path_len)?;
         }
 
         Ok(())

@@ -2,8 +2,8 @@ use anyhow::Context;
 use clap::Args;
 use rustgit::write_utils::write_object;
 use rustgit::{
-    hash::Sha1Hash,
     object::{ObjectBuffer, ObjectType},
+    oid::ObjectId,
     Repository,
 };
 use std::{fs, io::Read};
@@ -38,7 +38,7 @@ pub fn hash_object(args: HashObjectArgs) -> anyhow::Result<()> {
     };
 
     let blob = ObjectBuffer::new(ObjectType::Blob, body.as_bytes());
-    let object_hash = Sha1Hash::from_object(&blob);
+    let object_hash = ObjectId::from_object_buffer(&blob);
     println!("{}", object_hash.to_hex_string());
 
     if args.perform_write {

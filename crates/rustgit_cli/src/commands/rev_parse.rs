@@ -1,5 +1,5 @@
 use clap::Args;
-use rustgit::hash::Sha1HashHexString;
+use rustgit::oid::Sha1HashHexString;
 
 use rustgit::Repository;
 

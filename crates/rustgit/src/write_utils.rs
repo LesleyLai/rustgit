@@ -1,7 +1,7 @@
 use crate::is_executable::IsExecutable;
 use crate::object::ObjectType;
 use crate::repository::Repository;
-use crate::{hash::Sha1Hash, object::ObjectBuffer};
+use crate::{object::ObjectBuffer, oid::ObjectId};
 use anyhow::Context;
 use std::{fs, path::Path};
 
@@ -9,7 +9,7 @@ use std::{fs, path::Path};
 pub fn write_object(
     repository: &Repository,
     object_buffer: &ObjectBuffer,
-    object_hash: Sha1Hash,
+    object_hash: ObjectId,
 ) -> anyhow::Result<()> {
     use flate2::read::ZlibEncoder;
     use std::io::prelude::*;
@@ -43,7 +43,7 @@ pub fn write_object(
 
 // Recursively create a tree object and return the tree SHA
 // TODO: should write index rather than a directory
-pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Sha1Hash> {
+pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<ObjectId> {
     use std::io::Write;
 
     assert!(path.is_dir());
@@ -82,7 +82,7 @@ pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Sha1Ha
 
             let content = fs::read_to_string(child_path.to_str().unwrap())?;
             let blob = ObjectBuffer::new(ObjectType::Blob, content.as_bytes());
-            let object_hash = Sha1Hash::from_object(&blob);
+            let object_hash = ObjectId::from_object_buffer(&blob);
 
             object_hash
         } else if child_path.is_dir() {
@@ -104,7 +104,7 @@ pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Sha1Ha
     }
 
     let tree = ObjectBuffer::new(ObjectType::Tree, &content);
-    let hash = Sha1Hash::from_object(&tree);
+    let hash = ObjectId::from_object_buffer(&tree);
     write_object(repository, &tree, hash)?;
     Ok(hash)
 }

@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
-use crate::hash::Sha1Hash;
+use crate::oid::ObjectId;
 use crate::references::hash_from_reference;
 
 /// Abstraction for a Git Repository
@@ -26,10 +26,15 @@ impl Repository {
         fs::create_dir(&git_directory.join("refs"))?;
         fs::write(&git_directory.join("HEAD"), "ref: refs/heads/main\n")?;
 
-        Ok(Repository {
-            repository_directory: path.to_path_buf(),
+        Ok(Self::open(path.to_path_buf(), git_directory))
+    }
+
+    /// Open an existing git repository
+    pub fn open(repository_directory: PathBuf, git_directory: PathBuf) -> Repository {
+        Repository {
+            repository_directory,
             git_directory,
-        })
+        }
     }
 
     /// Upward search a git repository from a path, and open the repository if find one
@@ -46,14 +51,10 @@ impl Repository {
         }
 
         let git_directory = repository_directory.join(".git");
-
-        Ok(Repository {
-            repository_directory,
-            git_directory,
-        })
+        Ok(Self::open(repository_directory, git_directory))
     }
 
-    pub fn object_path_from_hash(&self, object_hash: Sha1Hash) -> PathBuf {
+    pub fn object_path_from_hash(&self, object_hash: ObjectId) -> PathBuf {
         // TODO: support shortest unique object hashes
         let hash_hex_string = object_hash.to_hex_string().0;
         let (s1, s2) = hash_hex_string.split_at(2);
@@ -67,7 +68,7 @@ impl Repository {
     }
 
     /// Retrieve and resolve the reference pointed at by HEAD.
-    pub fn head(&self) -> anyhow::Result<Option<Sha1Hash>> {
+    pub fn head(&self) -> anyhow::Result<Option<ObjectId>> {
         let head_path = self.git_directory.join("HEAD");
 
         let head_content = fs::read_to_string(head_path)?;
@@ -76,8 +77,13 @@ impl Repository {
             hash_from_reference(&self.git_directory, head_content[5..].trim())
         } else {
             // detached head
-            let hash = Sha1Hash::from_unvalidated_hex_string(head_content.trim())?;
+            let hash = ObjectId::from_unvalidated_hex_string(head_content.trim())?;
             Ok(Some(hash))
         }
     }
+    //
+    // // path to .git/refs
+    // fn ref_path(&self) -> PathBuf {
+    //     self.git_directory.join("refs")
+    // }
 }

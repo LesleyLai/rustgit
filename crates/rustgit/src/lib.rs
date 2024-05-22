@@ -1,5 +1,5 @@
-pub mod hash;
 pub mod object;
+pub mod oid;
 pub mod references;
 
 mod repository;

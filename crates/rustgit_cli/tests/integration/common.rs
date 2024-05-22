@@ -1,6 +1,6 @@
 use assert_cmd::assert::Assert;
 use assert_cmd::prelude::*;
-use rustgit::hash::Sha1HashHexString;
+use rustgit::oid::Sha1HashHexString;
 use std::str::from_utf8;
 use std::{ffi::OsStr, fs, path::Path, process::Command};
 

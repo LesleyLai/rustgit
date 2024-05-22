@@ -1,5 +1,5 @@
 use clap::Args;
-use rustgit::hash::Sha1Hash;
+use rustgit::oid::ObjectId;
 use rustgit::Repository;
 
 #[derive(Args, Debug)]
@@ -14,10 +14,10 @@ pub struct CommitTreeArgs {
 }
 
 pub fn commit_tree(args: CommitTreeArgs) -> anyhow::Result<()> {
-    let tree_sha = Sha1Hash::from_unvalidated_hex_string(&args.tree_sha)?;
+    let tree_sha = ObjectId::from_unvalidated_hex_string(&args.tree_sha)?;
 
     let parent_commit_sha = if let Some(sha) = &args.parent_commit_sha {
-        Some(Sha1Hash::from_unvalidated_hex_string(sha)?)
+        Some(ObjectId::from_unvalidated_hex_string(sha)?)
     } else {
         None
     };

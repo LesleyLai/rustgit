@@ -2,7 +2,7 @@ use crate::parse_util::parse_usize;
 use anyhow::Context;
 use clap::Args;
 use flate2::read::ZlibDecoder;
-use rustgit::{hash::Sha1Hash, utils::remove_last, Repository};
+use rustgit::{oid::ObjectId, utils::remove_last, Repository};
 use std::{
     fs::File,
     io::{prelude::*, BufReader, Write},
@@ -22,7 +22,7 @@ pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
     let repository = Repository::search_and_open(&std::env::current_dir()?)?;
 
     // TODO: support shortest unique object hashes
-    let object_hash = Sha1Hash::from_unvalidated_hex_string(&args.object_hash)?;
+    let object_hash = ObjectId::from_unvalidated_hex_string(&args.object_hash)?;
     let path = repository.object_path_from_hash(object_hash);
 
     let file = File::open(&path)?;
