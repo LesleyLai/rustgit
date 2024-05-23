@@ -87,12 +87,12 @@ pub fn add(args: AddArgs) -> anyhow::Result<()> {
 
     let repo = Repository::search_and_open(&current_dir)?;
 
-    let mut index_lockfile = Lockfile::new(&repo.git_directory.join("index"))?;
+    let mut index_lockfile = Lockfile::new(&repo.git_dir.join("index"))?;
 
     let paths = args
         .pathspecs
         .iter()
-        .map(|pathspec| parse_pathspec(pathspec, &current_dir, &repo.repository_directory))
+        .map(|pathspec| parse_pathspec(pathspec, &current_dir, &repo.repository_dir))
         .collect::<anyhow::Result<Vec<_>>>()?;
 
     let mut file_list: BTreeSet<&Path> = BTreeSet::new();
@@ -102,7 +102,7 @@ pub fn add(args: AddArgs) -> anyhow::Result<()> {
         }
     }
 
-    let mut index = Index::open(&repo.git_directory.join("index"))?;
+    let mut index = Index::open(&repo.git_dir.join("index"))?;
 
     for file_path in file_list {
         let body = fs::read_to_string(file_path)?;
@@ -114,7 +114,7 @@ pub fn add(args: AddArgs) -> anyhow::Result<()> {
         let metadata = get_metadata(&file_path)?;
 
         let path = file_path
-            .strip_prefix(&repo.repository_directory.canonicalize()?)?
+            .strip_prefix(&repo.repository_dir.canonicalize()?)?
             .to_path_buf();
         index.add(path, oid, metadata)
     }

@@ -5,7 +5,7 @@ pub fn init() -> std::io::Result<()> {
     let repo = Repository::init(&current_dir)?;
     println!(
         "Initialized empty Git repository in {}",
-        repo.git_directory.display()
+        repo.git_dir.display()
     );
     Ok(())
 }

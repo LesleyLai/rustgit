@@ -1,7 +1,8 @@
 use clap::Args;
-use rustgit::lockfile::Lockfile;
 use rustgit::{
+    lockfile::Lockfile,
     object::{commit_tree, CommitTreeArgs},
+    references::ReferenceError,
     Repository,
 };
 use std::io::Write;
@@ -24,7 +25,11 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
     let tree_sha = rustgit::write_utils::write_tree(&repository, &working_dir)?;
 
     // get current commit
-    let parent_commit_sha = repository.head()?;
+    let parent_commit_sha = match repository.head_id() {
+        Ok(sha) => Ok(Some(sha)),
+        Err(ReferenceError::NotExist(_)) => Ok(None),
+        Err(e) => Err(e),
+    }?;
 
     // git commit-tree
     let commit_sha = commit_tree(
@@ -37,14 +42,14 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
     )?;
 
     // update-ref for the current branch
-    let head_path = repository.git_directory.join("HEAD");
+    let head_path = repository.git_dir.join("HEAD");
     let _head_lock = Lockfile::new(&head_path)?;
 
     let head_content = std::fs::read_to_string(head_path)?;
 
     if head_content.starts_with("ref: ") {
         let reference = head_content[5..].trim();
-        let reference_path = repository.git_directory.join(reference);
+        let reference_path = repository.git_dir.join(reference);
         let mut reference_lock = Lockfile::new(&reference_path)?;
         reference_lock.write_all(&commit_sha.to_hex_string().0)?;
         reference_lock.commit()?;

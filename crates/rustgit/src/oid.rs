@@ -23,6 +23,14 @@ fn byte2hex(byte: u8) -> (u8, u8) {
     (high, low)
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum SHA1ValidationError {
+    #[error("InvalidHexString: {0}")]
+    InvalidHexString(String),
+    #[error("An sha1 hash should be 20 bytes long. Get: {0}")]
+    SHA1Error(String),
+}
+
 impl ObjectId {
     /// Compute a hash from a git object
     pub fn from_object_buffer(object: &ObjectBuffer) -> Self {
@@ -41,14 +49,13 @@ impl ObjectId {
         )
     }
 
-    pub fn from_unvalidated_hex_string(s: &str) -> anyhow::Result<Self> {
-        let data = hex::decode(s).with_context(|| format!("Invalid hex string: {}", s))?;
+    pub fn from_unvalidated_sh1_hex_string(s: &str) -> Result<Self, SHA1ValidationError> {
+        let data =
+            hex::decode(s).map_err(|_| SHA1ValidationError::InvalidHexString(s.to_string()))?;
 
-        Ok(ObjectId(
-            data.as_slice()
-                .try_into()
-                .context("An sha1 hash should be 20 bytes long")?,
-        ))
+        Ok(ObjectId(data.as_slice().try_into().map_err(|_| {
+            SHA1ValidationError::SHA1Error(s.to_string())
+        })?))
     }
 
     pub fn to_hex_string(&self) -> Sha1HashHexString {
@@ -120,12 +127,12 @@ mod tests {
 
     #[test]
     fn from_unvalidated_hex_string() {
-        assert!(ObjectId::from_unvalidated_hex_string("asdfs").is_err());
-        assert!(ObjectId::from_unvalidated_hex_string("0f46").is_err());
+        assert!(ObjectId::from_unvalidated_sh1_hex_string("asdfs").is_err());
+        assert!(ObjectId::from_unvalidated_sh1_hex_string("0f46").is_err());
 
         const HASH: &str = "0f46983e0baf73ba9bf82a7317223d2eebc728d8";
         assert_eq!(
-            &ObjectId::from_unvalidated_hex_string(HASH)
+            &ObjectId::from_unvalidated_sh1_hex_string(HASH)
                 .unwrap()
                 .to_string(),
             HASH

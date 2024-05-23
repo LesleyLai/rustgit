@@ -11,7 +11,7 @@ pub struct LsFilesArgs {
 pub fn ls_files(args: LsFilesArgs) -> anyhow::Result<()> {
     let repository = Repository::search_and_open(&std::env::current_dir()?)?;
 
-    let index = Index::open(&repository.git_directory.join("index"))?;
+    let index = Index::open(&repository.git_dir.join("index"))?;
     for entry in index.iter() {
         if args.stage {
             println!(

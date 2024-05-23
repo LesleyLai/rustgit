@@ -1,31 +1,58 @@
-use crate::oid::ObjectId;
-//use std::path::PathBuf;
-use std::{io::ErrorKind, path::Path};
+use crate::oid::{ObjectId, SHA1ValidationError};
+use crate::Repository;
+use std::{fs, io::ErrorKind};
 
-// // A ref is a variable that holds a single object identifier. The object identifier can be any valid Git object (blob, tree, commit, tag).
-// #[derive(Debug, PartialEq, Eq)]
-// pub enum Ref {
-//     OId {
-//         oid: Sha1Hash,
-//     },
-//     SymRef {
-//         // The path relative to .git/refs
-//         path: PathBuf,
-//     },
-//     HEAD,
-// }
+// A ref is a variable that holds a single object identifier.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Ref {
+    /// A peeled reference contains an object id
+    Peeled(ObjectId),
 
-pub fn hash_from_reference(git_path: &Path, reference: &str) -> anyhow::Result<Option<ObjectId>> {
-    let ref_path = git_path.join(reference);
+    /// A symbolic reference contains a fully-qualified name
+    Symbolic(String),
+}
 
-    let ref_content_result = std::fs::read_to_string(&ref_path);
-    if let Err(ref err) = ref_content_result {
-        if err.kind() == ErrorKind::NotFound {
-            return Ok(None);
-        }
+#[derive(thiserror::Error, Debug)]
+pub enum ReferenceError {
+    #[error("Reference does not exist: {0}")]
+    NotExist(String),
+    #[error("IO Error")]
+    IOError(#[from] std::io::Error),
+
+    #[error("SHA1 Error")]
+    SHA1Error(#[from] SHA1ValidationError),
+}
+
+impl Repository {
+    /// Given a name, trying to find the corresponding reference
+    /// Returns None if no references exist
+    pub fn try_find_reference(&self, name: &str) -> Result<Option<Ref>, ReferenceError> {
+        let ref_path = self.git_dir.join(name);
+        let ref_content = match fs::read_to_string(ref_path) {
+            Err(e) if e.kind() == ErrorKind::NotFound => return Ok(None),
+            ref_content => ref_content,
+        }?;
+
+        let reference = if ref_content.starts_with("ref: ") {
+            Ref::Symbolic(ref_content[5..].trim().to_string())
+        } else {
+            let oid = ObjectId::from_unvalidated_sh1_hex_string(ref_content.trim())?;
+            Ref::Peeled(oid)
+        };
+        Ok(Some(reference))
     }
 
-    Ok(Some(ObjectId::from_unvalidated_hex_string(
-        &ref_content_result?.trim(),
-    )?))
+    /// Given a reference, recursively try to find the underlying object id
+    pub fn peel_reference(&self, reference: &Ref) -> Result<ObjectId, ReferenceError> {
+        match reference {
+            Ref::Peeled(oid) => Ok(*oid),
+            Ref::Symbolic(name) => {
+                let inner = self.try_find_reference(name)?;
+                match inner {
+                    Some(inner) => self.peel_reference(&inner),
+                    None => Err(ReferenceError::NotExist(name.clone())),
+                }
+            }
+        }
+    }
 }

@@ -9,26 +9,26 @@ pub struct RevParseArgs {
     arg: String,
 }
 
+fn rev_parse_impl(repo: &Repository, arg: &str) -> anyhow::Result<()> {
+    if arg == "HEAD" {
+        let head_hash = repo.head_id()?;
+        println!("{}", head_hash);
+    } else {
+        let sha1 = Sha1HashHexString::from_str(arg)?;
+        println!("{}", sha1);
+    }
+    Ok(())
+}
+
 pub fn rev_parse(args: RevParseArgs) -> anyhow::Result<()> {
     let repository = Repository::search_and_open(&std::env::current_dir()?)?;
-
     let arg = args.arg;
-    if arg == "HEAD" {
-        if let Some(head_hash) = repository.head()? {
-            println!("{}", head_hash)
-        } else {
-            anyhow::bail!("HEAD doesn't exist")
-        }
-    } else {
-        match Sha1HashHexString::from_str(&arg) {
-            Ok(sha1) => println!("{}", sha1),
-            Err(_) => {
-                anyhow::bail!(
-                    "ambiguous argument '{}': unknown revision or path not in the working tree.",
-                    arg
-                )
-            }
-        }
+
+    if rev_parse_impl(&repository, &arg).is_err() {
+        anyhow::bail!(
+            "ambiguous argument '{}': unknown revision or path not in the working tree.",
+            arg
+        )
     }
 
     Ok(())

@@ -1,7 +1,5 @@
-use rustgit::references::hash_from_reference;
 use rustgit::Repository;
 use std::env::current_dir;
-use std::fs;
 
 fn print_nothing_to_commit(has_no_commit_yet: bool) {
     print!("nothing to commit");
@@ -16,28 +14,21 @@ pub fn status() -> anyhow::Result<()> {
     let repository = Repository::search_and_open(&current_dir()?)
         .map_err(|_| anyhow::anyhow!("not a git repository (or any of the parent directories)"))?;
 
-    let head_path = repository.git_directory.join("HEAD");
+    let head = repository.head()?;
 
-    let head_content = fs::read_to_string(head_path)?;
+    let head_ref_name = head
+        .referent_name()
+        .expect("git status for detached head is not implemented");
 
-    let head_ref = if head_content.starts_with("ref: ") {
-        head_content[5..].trim()
+    let branch = if head_ref_name.starts_with("refs/heads/") {
+        &head_ref_name[11..]
     } else {
-        unimplemented!();
-    };
-    let branch = if head_ref.starts_with("refs/heads/") {
-        &head_ref[11..]
-    } else {
-        unimplemented!();
+        unimplemented!("Head reference has a bad format: {}", head_ref_name);
     };
 
     println!("On branch {}", branch);
 
-    let has_no_commit_yet = matches!(
-        hash_from_reference(&repository.git_directory, &head_ref)?,
-        None
-    );
-
+    let has_no_commit_yet = head.is_unborn();
     if has_no_commit_yet {
         println!("\nNo commits yet\n");
     }

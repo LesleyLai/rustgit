@@ -1,12 +1,11 @@
-use anyhow::Context;
 use clap::Args;
-use rustgit::write_utils::write_object;
 use rustgit::{
     object::{ObjectBuffer, ObjectType},
     oid::ObjectId,
+    write_utils::write_object,
     Repository,
 };
-use std::{fs, io::Read};
+use std::fs;
 
 #[derive(Args, Debug)]
 #[group(required = true, multiple = false)]
@@ -28,11 +27,7 @@ pub struct HashObjectArgs {
 
 pub fn hash_object(args: HashObjectArgs) -> anyhow::Result<()> {
     let body = if args.group.stdin {
-        let mut input = String::new();
-        std::io::stdin()
-            .read_to_string(&mut input)
-            .context("Failed to read from stdin")?;
-        input
+        std::io::read_to_string(std::io::stdin())?
     } else {
         fs::read_to_string(args.group.filename.unwrap())?
     };

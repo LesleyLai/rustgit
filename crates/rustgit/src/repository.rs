@@ -3,12 +3,11 @@ use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 use crate::oid::ObjectId;
-use crate::references::hash_from_reference;
 
 /// Abstraction for a Git Repository
 pub struct Repository {
-    pub repository_directory: PathBuf,
-    pub git_directory: PathBuf,
+    pub repository_dir: PathBuf,
+    pub git_dir: PathBuf,
 }
 
 #[derive(Copy, Clone, Error, Debug)]
@@ -20,20 +19,20 @@ pub enum RepositorySearchError {
 impl Repository {
     /// Creates a new Git repository in the given folder.
     pub fn init(path: &Path) -> std::io::Result<Repository> {
-        let git_directory = path.join(".git");
-        fs::create_dir(&git_directory)?;
-        fs::create_dir(&git_directory.join("objects"))?;
-        fs::create_dir(&git_directory.join("refs"))?;
-        fs::write(&git_directory.join("HEAD"), "ref: refs/heads/main\n")?;
+        let git_dir = path.join(".git");
+        fs::create_dir(&git_dir)?;
+        fs::create_dir(&git_dir.join("objects"))?;
+        fs::create_dir(&git_dir.join("refs"))?;
+        fs::write(&git_dir.join("HEAD"), "ref: refs/heads/main\n")?;
 
-        Ok(Self::open(path.to_path_buf(), git_directory))
+        Ok(Self::open(path.to_path_buf(), git_dir))
     }
 
     /// Open an existing git repository
-    pub fn open(repository_directory: PathBuf, git_directory: PathBuf) -> Repository {
+    pub fn open(repository_dir: PathBuf, git_dir: PathBuf) -> Repository {
         Repository {
-            repository_directory,
-            git_directory,
+            repository_dir,
+            git_dir,
         }
     }
 
@@ -59,31 +58,11 @@ impl Repository {
         let hash_hex_string = object_hash.to_hex_string().0;
         let (s1, s2) = hash_hex_string.split_at(2);
 
-        let mut path = self.git_directory.clone();
+        let mut path = self.git_dir.clone();
         path.reserve(10 + s1.len() + s2.len());
         path.push("objects");
         path.push(std::str::from_utf8(s1).unwrap());
         path.push(std::str::from_utf8(s2).unwrap());
         path
     }
-
-    /// Retrieve and resolve the reference pointed at by HEAD.
-    pub fn head(&self) -> anyhow::Result<Option<ObjectId>> {
-        let head_path = self.git_directory.join("HEAD");
-
-        let head_content = fs::read_to_string(head_path)?;
-
-        if head_content.starts_with("ref: ") {
-            hash_from_reference(&self.git_directory, head_content[5..].trim())
-        } else {
-            // detached head
-            let hash = ObjectId::from_unvalidated_hex_string(head_content.trim())?;
-            Ok(Some(hash))
-        }
-    }
-    //
-    // // path to .git/refs
-    // fn ref_path(&self) -> PathBuf {
-    //     self.git_directory.join("refs")
-    // }
 }

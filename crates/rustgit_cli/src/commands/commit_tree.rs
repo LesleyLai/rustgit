@@ -14,10 +14,10 @@ pub struct CommitTreeArgs {
 }
 
 pub fn commit_tree(args: CommitTreeArgs) -> anyhow::Result<()> {
-    let tree_sha = ObjectId::from_unvalidated_hex_string(&args.tree_sha)?;
+    let tree_sha = ObjectId::from_unvalidated_sh1_hex_string(&args.tree_sha)?;
 
     let parent_commit_sha = if let Some(sha) = &args.parent_commit_sha {
-        Some(ObjectId::from_unvalidated_hex_string(sha)?)
+        Some(ObjectId::from_unvalidated_sh1_hex_string(sha)?)
     } else {
         None
     };
