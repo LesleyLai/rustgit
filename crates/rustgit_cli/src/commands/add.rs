@@ -17,14 +17,10 @@ pub struct AddArgs {
 
 fn parse_pathspec(pathspec: &str, current_dir: &Path, repo_path: &Path) -> anyhow::Result<PathBuf> {
     let mut path = PathBuf::from(pathspec);
-    println!("current_dir: {}", current_dir.display());
-
-    println!("path: {}", path.display());
 
     if path.is_relative() {
         path = current_dir.join(path);
     }
-    println!("path2: {}", path.display());
 
     let path = match path.canonicalize() {
         Err(err) if err.kind() == ErrorKind::NotFound => {
@@ -32,9 +28,6 @@ fn parse_pathspec(pathspec: &str, current_dir: &Path, repo_path: &Path) -> anyho
         }
         res => res?,
     };
-
-    println!("path3: {}", path.display());
-    println!("repo path: {}", repo_path.display());
 
     anyhow::ensure!(
         path.starts_with(repo_path.canonicalize().unwrap()),
@@ -82,6 +75,29 @@ fn get_metadata(path: &Path) -> anyhow::Result<EntryMetadata> {
     })
 }
 
+// Recursively search all files in a path
+fn add_files_inside(
+    path: PathBuf,
+    repository_dir: &Path,
+    output: &mut BTreeSet<PathBuf>,
+) -> anyhow::Result<()> {
+    // Ignore .git folder
+    if path.ends_with(".git") {
+        return Ok(());
+    }
+
+    if path.is_file() {
+        output.insert(path.strip_prefix(repository_dir)?.to_path_buf());
+    } else if path.is_dir() {
+        for entry in fs::read_dir(path)? {
+            add_files_inside(entry?.path(), repository_dir, output)?;
+        }
+    } else {
+        anyhow::bail!("Doesn't know how to handle symlink");
+    }
+    Ok(())
+}
+
 pub fn add(args: AddArgs) -> anyhow::Result<()> {
     let current_dir = std::env::current_dir()?;
 
@@ -95,17 +111,15 @@ pub fn add(args: AddArgs) -> anyhow::Result<()> {
         .map(|pathspec| parse_pathspec(pathspec, &current_dir, &repo.repository_dir))
         .collect::<anyhow::Result<Vec<_>>>()?;
 
-    let mut file_list: BTreeSet<&Path> = BTreeSet::new();
-    for path in &paths {
-        if path.is_file() {
-            file_list.insert(path);
-        }
+    let mut files: BTreeSet<_> = BTreeSet::new();
+    for path in paths {
+        add_files_inside(path, &repo.repository_dir, &mut files)?;
     }
 
     let mut index = Index::open(&repo.git_dir.join("index"))?;
 
-    for file_path in file_list {
-        let body = fs::read_to_string(file_path)?;
+    for file_path in files {
+        let body = fs::read_to_string(&file_path)?;
         let blob = ObjectBuffer::new(ObjectType::Blob, body.as_bytes());
         let oid = ObjectId::from_object_buffer(&blob);
 
@@ -113,10 +127,7 @@ pub fn add(args: AddArgs) -> anyhow::Result<()> {
 
         let metadata = get_metadata(&file_path)?;
 
-        let path = file_path
-            .strip_prefix(&repo.repository_dir.canonicalize()?)?
-            .to_path_buf();
-        index.add(path, oid, metadata)
+        index.add(file_path, oid, metadata)
     }
     index.write_to(&mut index_lockfile)?;
     index_lockfile.commit()

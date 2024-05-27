@@ -1,0 +1,8 @@
+---
+source: crates/rustgit_cli/tests/integration/commands/add.rs
+assertion_line: 48
+expression: git().ls_files()
+---
+dir/file1.txt
+dir/inner/inner_file.txt
+file.txt
