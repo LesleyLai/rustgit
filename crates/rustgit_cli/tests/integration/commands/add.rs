@@ -49,6 +49,30 @@ fn folder() {
 }
 
 #[test]
+fn incremental() {
+    let working_dir = test_path!();
+
+    let git = || git(&working_dir);
+    let rustgit = || rustgit(&working_dir);
+
+    git().init();
+
+    let dir = working_dir.join("dir");
+    fs::create_dir(&dir).unwrap();
+    fs::write(&dir.join("file1.txt"), "file1").unwrap();
+    fs::write(&working_dir.join("file.txt"), "file").unwrap();
+    let inner_dir = dir.join("inner");
+    fs::create_dir(&inner_dir).unwrap();
+    fs::write(&inner_dir.join("inner_file.txt"), "inner file").unwrap();
+
+    rustgit().args(["stage", "file.txt"]).assert().success();
+    insta::assert_snapshot!("incremental 1", git().ls_files());
+
+    rustgit().args(["stage", "dir"]).assert().success();
+    insta::assert_snapshot!("incremental 2", git().ls_files());
+}
+
+#[test]
 fn non_exist() {
     let working_dir = test_path!();
 

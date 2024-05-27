@@ -1,0 +1,6 @@
+---
+source: crates/rustgit_cli/tests/integration/commands/add.rs
+assertion_line: 69
+expression: git().ls_files()
+---
+file.txt
