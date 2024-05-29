@@ -14,7 +14,7 @@ lazy_static! {
 
         git(&working_dir).init();
         populate_folder(&working_dir);
-        git(&working_dir).stage(".");
+        git(&working_dir).stage(&["."]);
 
         git(&working_dir).commit("message");
         working_dir

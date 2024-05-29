@@ -16,7 +16,7 @@ lazy_static! {
 
         assert!(rustgit(&working_dir).ls_files().is_empty());
 
-        git(&working_dir).stage(".");
+        git(&working_dir).stage(&["."]);
 
         working_dir
     };

@@ -18,10 +18,7 @@ fn files() {
     fs::write(&dir.join("file1.txt"), "file1").unwrap();
     fs::write(&working_dir.join("file.txt"), "file").unwrap();
 
-    rustgit()
-        .args(["stage", "dir/file1.txt", "file.txt"])
-        .assert()
-        .success();
+    rustgit().stage(["dir/file1.txt", "file.txt"]);
 
     insta::assert_snapshot!(git().ls_files());
 }
@@ -43,7 +40,7 @@ fn folder() {
     fs::create_dir(&inner_dir).unwrap();
     fs::write(&inner_dir.join("inner_file.txt"), "inner file").unwrap();
 
-    rustgit().args(["stage", "."]).assert().success();
+    rustgit().stage(["."]);
 
     insta::assert_snapshot!(git().ls_files());
 }
@@ -65,10 +62,10 @@ fn incremental() {
     fs::create_dir(&inner_dir).unwrap();
     fs::write(&inner_dir.join("inner_file.txt"), "inner file").unwrap();
 
-    rustgit().args(["stage", "file.txt"]).assert().success();
+    rustgit().stage(["file.txt"]);
     insta::assert_snapshot!("incremental 1", git().ls_files());
 
-    rustgit().args(["stage", "dir"]).assert().success();
+    rustgit().stage(["dir"]);
     insta::assert_snapshot!("incremental 2", git().ls_files());
 }
 

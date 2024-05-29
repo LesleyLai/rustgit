@@ -20,7 +20,7 @@ fn initial_commit() -> anyhow::Result<()> {
 
     git().init();
     populate_folder(&working_dir);
-    git().stage(".");
+    git().stage(&["."]);
 
     // Initial commit
     rustgit(&working_dir).commit("initial commit");
@@ -41,14 +41,14 @@ fn commit_with_parent() -> anyhow::Result<()> {
 
     git().init();
     populate_folder(&working_dir);
-    git().stage(".");
+    git().stage(&["."]);
 
     // Initial commit
     git().commit("initial commit");
 
     // adds another file
     fs::write(&working_dir.join("another file.txt"), "another file").unwrap();
-    git().stage(".");
+    git().stage(&["."]);
 
     // another commit
     rustgit(&working_dir).commit("another commit");

@@ -43,6 +43,12 @@ impl GitCommand {
         self.arg("init").0.assert().success();
     }
 
+    pub(crate) fn ls_tree(mut self, tree_hash: Sha1HashHexString) -> String {
+        let assert = self.args(["ls-tree", &tree_hash]).assert().success();
+
+        from_utf8(&assert.get_output().stdout).unwrap().to_string()
+    }
+
     pub(crate) fn ls_files(mut self) -> String {
         let assert = self.arg("ls-files").assert().success();
 
@@ -60,9 +66,9 @@ impl GitCommand {
         from_utf8(&assert.get_output().stdout).unwrap().to_string()
     }
 
-    pub(crate) fn write_tree(mut self) -> anyhow::Result<Sha1HashHexString> {
+    pub(crate) fn write_tree(mut self) -> Sha1HashHexString {
         let assert = self.args(["write-tree"]).assert().success();
-        Sha1HashHexString::from_u8_slice(&assert.get_output().stdout)
+        Sha1HashHexString::from_u8_slice(&assert.get_output().stdout).unwrap()
     }
 
     pub(crate) fn rev_parse<I, S>(mut self, args: I) -> anyhow::Result<Sha1HashHexString>
@@ -80,8 +86,12 @@ impl GitCommand {
         String::from_utf8_lossy(&git_log_command.get_output().stdout).to_string()
     }
 
-    pub(crate) fn stage(mut self, dir: &str) {
-        self.args(["stage", dir]).assert().success();
+    pub(crate) fn stage<I, S>(mut self, args: I)
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        self.arg("stage").args(args).assert().success();
     }
 
     pub(crate) fn commit_tree(
@@ -163,11 +173,11 @@ impl InstaSettingsExt for insta::Settings {
     }
 }
 
-pub(crate) fn head_sha(working_dir: &Path) -> anyhow::Result<Sha1HashHexString> {
-    let hash = git(working_dir)
+pub(crate) fn head_sha(working_dir: &Path) -> Sha1HashHexString {
+    let assert = git(working_dir)
         .args(["rev-parse", "HEAD"])
-        .as_command()
-        .output()?
-        .stdout;
-    Sha1HashHexString::from_u8_slice(&hash)
+        .assert()
+        .success();
+    let hash: &[u8] = &assert.get_output().stdout;
+    Sha1HashHexString::from_u8_slice(hash).expect("Expect rev-parse to get a valid sha")
 }

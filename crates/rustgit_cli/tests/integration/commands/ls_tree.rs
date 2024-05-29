@@ -14,11 +14,11 @@ lazy_static! {
 
         git(&working_dir).init();
         populate_folder(&working_dir);
-        git(&working_dir).stage(".");
+        git(&working_dir).stage(&["."]);
 
         working_dir
     };
-    static ref TREE_HASH: Sha1HashHexString = git(&WORKING_DIR).write_tree().unwrap();
+    static ref TREE_HASH: Sha1HashHexString = git(&WORKING_DIR).write_tree();
 }
 
 // ls-tree --name-only <tree-sha>
