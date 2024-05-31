@@ -5,42 +5,6 @@ use crate::{object::ObjectBuffer, oid::ObjectId};
 use anyhow::Context;
 use std::{fs, path::Path};
 
-/// Given full data of a git object and its Sha1 hash, write it to disk
-pub fn write_object(
-    repository: &Repository,
-    object_buffer: &ObjectBuffer,
-    object_hash: ObjectId,
-) -> anyhow::Result<()> {
-    use flate2::read::ZlibEncoder;
-    use std::io::prelude::*;
-
-    // TODO: write to a temporary object first
-
-    let object_path = repository.object_path_from_hash(object_hash);
-    if object_path.exists() {
-        // already exist. Quit
-        return Ok(());
-    }
-
-    fs::create_dir_all(object_path.parent().unwrap()).with_context(|| {
-        format!(
-            "Failed to create parent directory for object {}",
-            object_hash
-        )
-    })?;
-
-    let mut encoder = ZlibEncoder::new(object_buffer.data(), Default::default());
-    let mut output = vec![];
-    encoder.read_to_end(&mut output)?;
-
-    let mut file = fs::File::create(&object_path)
-        .with_context(|| format!("Failed to create file at {}", &object_path.display()))?;
-    file.write_all(&output)
-        .with_context(|| format!("fail to writing file to {}", &object_path.display()))?;
-
-    Ok(())
-}
-
 // Recursively create a tree object and return the tree SHA
 // TODO: should write index rather than a directory
 pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<ObjectId> {
@@ -105,6 +69,6 @@ pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Object
 
     let tree = ObjectBuffer::new(ObjectType::Tree, &content);
     let hash = ObjectId::from_object_buffer(&tree);
-    write_object(repository, &tree, hash)?;
+    repository.write_object_buffer(hash, &tree)?;
     Ok(hash)
 }

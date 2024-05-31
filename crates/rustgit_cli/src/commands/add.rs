@@ -3,7 +3,6 @@ use rustgit::index::{EntryMetadata, Index};
 use rustgit::lockfile::Lockfile;
 use rustgit::object::{ObjectBuffer, ObjectType};
 use rustgit::oid::ObjectId;
-use rustgit::write_utils::write_object;
 use rustgit::Repository;
 use std::collections::BTreeSet;
 use std::fs;
@@ -123,8 +122,7 @@ pub fn add(args: AddArgs) -> anyhow::Result<()> {
         let blob = ObjectBuffer::new(ObjectType::Blob, body.as_bytes());
         let oid = ObjectId::from_object_buffer(&blob);
 
-        write_object(&repo, &blob, oid)?;
-
+        repo.write_object_buffer(oid, &blob)?;
         let metadata = get_metadata(&file_path)?;
 
         index.add(file_path, oid, metadata)

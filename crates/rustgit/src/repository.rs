@@ -2,12 +2,15 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
-use crate::oid::ObjectId;
+use crate::database::DatabaseWriteError;
+use crate::object::ObjectBuffer;
+use crate::{database::Database, oid::ObjectId};
 
 /// Abstraction for a Git Repository
 pub struct Repository {
     pub repository_dir: PathBuf,
     pub git_dir: PathBuf,
+    database: Database,
 }
 
 #[derive(Copy, Clone, Error, Debug)]
@@ -30,9 +33,11 @@ impl Repository {
 
     /// Open an existing git repository
     pub fn open(repository_dir: PathBuf, git_dir: PathBuf) -> Repository {
+        let database = Database::open(&git_dir);
         Repository {
             repository_dir,
             git_dir,
+            database,
         }
     }
 
@@ -53,16 +58,16 @@ impl Repository {
         Ok(Self::open(repository_directory, git_directory))
     }
 
-    pub fn object_path_from_hash(&self, object_hash: ObjectId) -> PathBuf {
-        // TODO: support shortest unique object hashes
-        let hash_hex_string = object_hash.to_hex_string().0;
-        let (s1, s2) = hash_hex_string.split_at(2);
+    pub fn object_path_from_obj(&self, oid: ObjectId) -> PathBuf {
+        self.database.object_path_from_oid(oid)
+    }
 
-        let mut path = self.git_dir.clone();
-        path.reserve(10 + s1.len() + s2.len());
-        path.push("objects");
-        path.push(std::str::from_utf8(s1).unwrap());
-        path.push(std::str::from_utf8(s2).unwrap());
-        path
+    /// Write an already in-memory object
+    pub fn write_object_buffer(
+        &self,
+        oid: ObjectId,
+        object_buffer: &ObjectBuffer,
+    ) -> Result<(), DatabaseWriteError> {
+        self.database.write_object_buffer(oid, object_buffer)
     }
 }

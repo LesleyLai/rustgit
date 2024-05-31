@@ -2,7 +2,6 @@ use clap::Args;
 use rustgit::{
     object::{ObjectBuffer, ObjectType},
     oid::ObjectId,
-    write_utils::write_object,
     Repository,
 };
 use std::fs;
@@ -33,13 +32,12 @@ pub fn hash_object(args: HashObjectArgs) -> anyhow::Result<()> {
     };
 
     let blob = ObjectBuffer::new(ObjectType::Blob, body.as_bytes());
-    let object_hash = ObjectId::from_object_buffer(&blob);
-    println!("{}", object_hash.to_hex_string());
+    let oid = ObjectId::from_object_buffer(&blob);
+    println!("{}", oid.to_hex_string());
 
     if args.perform_write {
         let repository = Repository::search_and_open(&std::env::current_dir()?)?;
-
-        write_object(&repository, &blob, object_hash)?;
+        repository.write_object_buffer(oid, &blob)?;
     }
 
     Ok(())

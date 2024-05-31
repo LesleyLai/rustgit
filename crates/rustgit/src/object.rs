@@ -1,9 +1,7 @@
 // Utilities related to Git Object
 
 use crate::oid::ObjectId;
-use crate::write_utils::write_object;
 use crate::Repository;
-use anyhow::Context;
 use std::fmt::{Display, Formatter};
 
 #[allow(dead_code)]
@@ -88,7 +86,7 @@ committer {author_name} <{author_email}> 1243040974 -0700
 
     let object = ObjectBuffer::new(ObjectType::Commit, &content.as_bytes());
     let hash = ObjectId::from_object_buffer(&object);
-    write_object(&repository, &object, hash).context("failed to write commit object to disk")?;
+    repository.write_object_buffer(hash, &object)?;
 
     Ok(hash)
 }

@@ -10,6 +10,7 @@ pub use crate::repository::{Repository, RepositorySearchError};
 mod head;
 
 // TODO: should not be public
+mod database;
 pub mod index;
 mod is_executable;
 pub mod lockfile;

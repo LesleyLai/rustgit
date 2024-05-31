@@ -23,7 +23,7 @@ pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
 
     // TODO: support shortest unique object hashes
     let object_hash = ObjectId::from_unvalidated_sh1_hex_string(&args.object_hash)?;
-    let path = repository.object_path_from_hash(object_hash);
+    let path = repository.object_path_from_obj(object_hash);
 
     let file = File::open(&path)?;
     let mut decoder = BufReader::new(ZlibDecoder::new(&file));
