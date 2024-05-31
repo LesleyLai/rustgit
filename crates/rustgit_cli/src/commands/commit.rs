@@ -1,9 +1,7 @@
 use clap::Args;
 use rustgit::{
-    lockfile::Lockfile,
-    object::{commit_tree, CommitTreeArgs},
-    references::ReferenceError,
-    Repository,
+    lockfile::Lockfile, object::CommitTreeArgs, references::ReferenceError,
+    write_utils::commit_tree, Repository,
 };
 use std::io::Write;
 

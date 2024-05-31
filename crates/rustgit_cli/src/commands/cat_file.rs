@@ -40,7 +40,7 @@ pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
     let (typ, mut size) = remove_last(&output).split_at(separate_point);
     // TODO: support tree and commits
     if typ != b"blob" {
-        anyhow::bail!(".git/object file header does not start with a known type");
+        unimplemented!("cat-file for non-blob is not implemented yet");
     }
 
     size = &size[1..];

@@ -1,8 +1,7 @@
 use clap::Args;
 use rustgit::index::{EntryMetadata, Index};
 use rustgit::lockfile::Lockfile;
-use rustgit::object::{ObjectBuffer, ObjectType};
-use rustgit::oid::ObjectId;
+use rustgit::object::Blob;
 use rustgit::Repository;
 use std::collections::BTreeSet;
 use std::fs;
@@ -119,10 +118,8 @@ pub fn add(args: AddArgs) -> anyhow::Result<()> {
 
     for file_path in files {
         let body = fs::read_to_string(&file_path)?;
-        let blob = ObjectBuffer::new(ObjectType::Blob, body.as_bytes());
-        let oid = ObjectId::from_object_buffer(&blob);
-
-        repo.write_object_buffer(oid, &blob)?;
+        let blob = Blob::new(body.into_bytes().into_boxed_slice());
+        let oid = repo.write_object(&blob)?;
         let metadata = get_metadata(&file_path)?;
 
         index.add(file_path, oid, metadata)

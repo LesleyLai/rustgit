@@ -12,6 +12,7 @@ sha1 = "0.10.6"                                      # hashing
 hex = "0.4.3"                                        # working with hash output
 flate2 = "1.0"                                    # gzip compression
 thiserror = "1.0.61"
+chrono = "0.4.38"
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.9", features = ["winbase"] }
 

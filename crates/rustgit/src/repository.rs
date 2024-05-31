@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 use crate::database::DatabaseWriteError;
-use crate::object::ObjectBuffer;
+use crate::object::{Object, ObjectBuffer};
 use crate::{database::Database, oid::ObjectId};
 
 /// Abstraction for a Git Repository
@@ -60,6 +60,14 @@ impl Repository {
 
     pub fn object_path_from_obj(&self, oid: ObjectId) -> PathBuf {
         self.database.object_path_from_oid(oid)
+    }
+
+    /// Calculate the oid of an object, write the object to the database, and return the oid
+    pub fn write_object(&self, object: &impl Object) -> Result<ObjectId, DatabaseWriteError> {
+        let buffer = object.to_buffer();
+        let oid = ObjectId::from_object_buffer(&buffer);
+        self.database.write_object_buffer(oid, &buffer)?;
+        Ok(oid)
     }
 
     /// Write an already in-memory object

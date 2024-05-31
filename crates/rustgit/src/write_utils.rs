@@ -1,9 +1,11 @@
 use crate::is_executable::IsExecutable;
-use crate::object::ObjectType;
+use crate::object::{CommitTreeArgs, ObjectType};
 use crate::repository::Repository;
 use crate::{object::ObjectBuffer, oid::ObjectId};
 use anyhow::Context;
 use std::{fs, path::Path};
+
+use chrono::prelude::*;
 
 // Recursively create a tree object and return the tree SHA
 // TODO: should write index rather than a directory
@@ -71,4 +73,32 @@ pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Object
     let hash = ObjectId::from_object_buffer(&tree);
     repository.write_object_buffer(hash, &tree)?;
     Ok(hash)
+}
+
+fn get_env_var(key: &str) -> anyhow::Result<Option<String>> {
+    use std::env::VarError;
+    let str = match std::env::var(key) {
+        Ok(name) => Some(name),
+        Err(VarError::NotPresent) => None,
+        Err(VarError::NotUnicode(_)) => anyhow::bail!("${} is invalid utf-8", key),
+    };
+    Ok(str)
+}
+
+/// Commit a tree and returns commit sha
+pub fn commit_tree(repository: &Repository, args: CommitTreeArgs) -> anyhow::Result<ObjectId> {
+    // TODO: don't hardcode author names
+    let author_name = get_env_var("GIT_AUTHOR_NAME")?.unwrap_or("lesley lai".to_string());
+    let author_email =
+        get_env_var("GIT_AUTHOR_EMAIL")?.unwrap_or("lesley@lesleylai.info".to_string());
+
+    let author = crate::object::Author {
+        name: author_name,
+        email: author_email,
+        time: Local::now(),
+    };
+
+    let commit =
+        crate::object::Commit::new(args.tree_sha, args.parent_commit_sha, author, args.message);
+    Ok(repository.write_object(&commit)?)
 }

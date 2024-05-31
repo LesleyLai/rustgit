@@ -23,7 +23,7 @@ pub fn commit_tree(args: CommitTreeArgs) -> anyhow::Result<()> {
     };
 
     let repository = Repository::search_and_open(&std::env::current_dir()?)?;
-    let commit_hash = rustgit::object::commit_tree(
+    let commit_hash = rustgit::write_utils::commit_tree(
         &repository,
         rustgit::object::CommitTreeArgs {
             parent_commit_sha,

@@ -1,6 +1,7 @@
-pub mod object;
 pub mod oid;
 pub mod references;
+
+pub mod object;
 
 mod repository;
 pub mod utils;
