@@ -36,3 +36,37 @@ file1.txt";
 
     Ok(())
 }
+
+// ls-tree --name-only <tree-sha>
+#[test]
+fn tree() -> anyhow::Result<()> {
+    let expected = "040000 tree 91e1483644d087af54a6e8aac15a08c482bb9fb1    dir1
+040000 tree cf8e933fedbe540f9881ba4dc34b034785834227    dir2
+100644 blob b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0    file1.txt";
+
+    rustgit(&WORKING_DIR)
+        .args(["ls-tree", &TREE_HASH])
+        .assert()
+        .success()
+        .stdout(predicate::str::starts_with(expected));
+
+    Ok(())
+}
+
+// ls-tree --name-only <tree-sha>
+#[test]
+fn not_tree() -> anyhow::Result<()> {
+    let file1_oid_cmd = git(&WORKING_DIR)
+        .args(["hash-object", "file1.txt"])
+        .assert()
+        .success();
+    let file1_oid = Sha1HashHexString::from_u8_slice(&file1_oid_cmd.get_output().stdout)?;
+
+    rustgit(&WORKING_DIR)
+        .args(["ls-tree", &file1_oid])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("not a tree object"));
+
+    Ok(())
+}

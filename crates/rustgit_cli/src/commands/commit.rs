@@ -1,8 +1,5 @@
 use clap::Args;
-use rustgit::{
-    lockfile::Lockfile, object::CommitTreeArgs, references::ReferenceError,
-    write_utils::commit_tree, Repository,
-};
+use rustgit::{lockfile::Lockfile, object::Commit, references::ReferenceError, Repository};
 use std::io::Write;
 
 #[derive(Args, Debug)]
@@ -30,14 +27,9 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
     }?;
 
     // git commit-tree
-    let commit_sha = commit_tree(
-        &repository,
-        CommitTreeArgs {
-            parent_commit_sha,
-            message,
-            tree_sha,
-        },
-    )?;
+    let author = rustgit::object::get_author()?;
+    let commit_hash =
+        repository.write_object(&Commit::new(tree_sha, parent_commit_sha, author, message))?;
 
     // update-ref for the current branch
     let head_path = repository.git_dir.join("HEAD");
@@ -49,7 +41,7 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
         let reference = head_content[5..].trim();
         let reference_path = repository.git_dir.join(reference);
         let mut reference_lock = Lockfile::new(&reference_path)?;
-        reference_lock.write_all(&commit_sha.to_hex_string().0)?;
+        reference_lock.write_all(&commit_hash.to_hex_string().0)?;
         reference_lock.commit()?;
     } else {
         // TODO: detached head

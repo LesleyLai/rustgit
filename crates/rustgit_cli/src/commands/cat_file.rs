@@ -1,8 +1,11 @@
-use crate::parse_util::parse_usize;
 use anyhow::Context;
 use clap::Args;
 use flate2::read::ZlibDecoder;
-use rustgit::{oid::ObjectId, utils::remove_last, Repository};
+use rustgit::{
+    object::{read_header, ObjectHeader, ObjectType},
+    oid::ObjectId,
+    Repository,
+};
 use std::{
     fs::File,
     io::{prelude::*, BufReader, Write},
@@ -28,26 +31,14 @@ pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
     let file = File::open(&path)?;
     let mut decoder = BufReader::new(ZlibDecoder::new(&file));
 
-    let mut output = vec![];
-    decoder
-        .read_until(0, &mut output)
-        .context("read header from .git/objects")?;
+    let ObjectHeader { typ, size } = read_header(&mut decoder)?;
 
-    let separate_point = output
-        .iter()
-        .position(|&c| c == b' ')
-        .context("header has space separator")?;
-    let (typ, mut size) = remove_last(&output).split_at(separate_point);
     // TODO: support tree and commits
-    if typ != b"blob" {
+    if typ != ObjectType::Blob {
         unimplemented!("cat-file for non-blob is not implemented yet");
     }
 
-    size = &size[1..];
-
-    let size: usize = parse_usize(size).unwrap();
-
-    output.clear();
+    let mut output = vec![];
     output.resize(size, 0);
     decoder.read_exact(&mut output)?;
 
