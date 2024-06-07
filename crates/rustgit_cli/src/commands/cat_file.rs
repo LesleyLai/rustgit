@@ -1,15 +1,11 @@
 use anyhow::Context;
 use clap::Args;
-use flate2::read::ZlibDecoder;
 use rustgit::{
     object::{read_header, ObjectHeader, ObjectType},
     oid::ObjectId,
     Repository,
 };
-use std::{
-    fs::File,
-    io::{prelude::*, BufReader, Write},
-};
+use std::io::{prelude::*, Write};
 
 #[derive(Args, Debug)]
 pub struct CatFileArgs {
@@ -26,13 +22,9 @@ pub fn cat_file(args: CatFileArgs) -> anyhow::Result<()> {
 
     // TODO: support shortest unique object hashes
     let object_hash = ObjectId::from_unvalidated_sh1_hex_string(&args.object_hash)?;
-    let path = repository.object_path_from_obj(object_hash);
-
-    let file = File::open(&path)?;
-    let mut decoder = BufReader::new(ZlibDecoder::new(&file));
+    let mut decoder = repository.object_reader(object_hash)?;
 
     let ObjectHeader { typ, size } = read_header(&mut decoder)?;
-
     // TODO: support tree and commits
     if typ != ObjectType::Blob {
         unimplemented!("cat-file for non-blob is not implemented yet");

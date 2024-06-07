@@ -1,10 +1,17 @@
 // Object Database at .git/objects
 // Also including an in-memory cache
 
-use crate::{object::ObjectBuffer, oid::ObjectId};
-use std::fs;
-use std::path::{Path, PathBuf};
+use crate::object::Object;
+use crate::{object::ObjectBuffer, oid::ObjectId, Repository};
+use flate2::read::ZlibDecoder;
+use std::io::{BufRead, BufReader};
+use std::{
+    fs,
+    fs::File,
+    path::{Path, PathBuf},
+};
 use thiserror::Error;
+
 pub(crate) struct Database {
     objects_dir: PathBuf,
 }
@@ -33,6 +40,16 @@ impl Database {
         path.push(std::str::from_utf8(s1).unwrap());
         path.push(std::str::from_utf8(s2).unwrap());
         path
+    }
+
+    /// Given an object id, give back an object reader for the object on disk
+    pub(crate) fn object_reader(&self, oid: ObjectId) -> std::io::Result<impl BufRead> {
+        let file = fs::OpenOptions::new()
+            .read(true)
+            .create(false)
+            .open(self.object_path_from_oid(oid))?;
+
+        Ok(BufReader::new(ZlibDecoder::new(file)))
     }
 
     // Write an already in-memory object
@@ -71,9 +88,32 @@ impl Database {
             .read_to_end(&mut output)
             .map_err(to_database_write_error)?;
 
-        let mut file = fs::File::create(&object_path).map_err(to_database_write_error)?;
+        let mut file = File::create(&object_path).map_err(to_database_write_error)?;
         file.write_all(&output).map_err(to_database_write_error)?;
 
         Ok(())
+    }
+}
+
+impl Repository {
+    pub fn object_reader(&self, oid: ObjectId) -> std::io::Result<impl BufRead> {
+        self.database.object_reader(oid)
+    }
+
+    /// Calculate the oid of an object, write the object to the database, and return the oid
+    pub fn write_object(&self, object: &impl Object) -> Result<ObjectId, DatabaseWriteError> {
+        let buffer = object.to_buffer();
+        let oid = ObjectId::from_object_buffer(&buffer);
+        self.database.write_object_buffer(oid, &buffer)?;
+        Ok(oid)
+    }
+
+    /// Write an already in-memory object
+    pub fn write_object_buffer(
+        &self,
+        oid: ObjectId,
+        object_buffer: &ObjectBuffer,
+    ) -> Result<(), DatabaseWriteError> {
+        self.database.write_object_buffer(oid, object_buffer)
     }
 }

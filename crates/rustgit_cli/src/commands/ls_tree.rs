@@ -1,16 +1,12 @@
 use anyhow::Context;
 use clap::Args;
-use flate2::read::ZlibDecoder;
 use rustgit::{
     object::{read_header, ObjectHeader, ObjectType, Tree, TreeEntry},
     oid::ObjectId,
     utils::remove_last,
     Repository,
 };
-use std::{
-    fs::File,
-    io::{prelude::*, BufReader},
-};
+use std::io::prelude::*;
 
 #[derive(Args, Debug)]
 pub struct LsTreeArgs {
@@ -27,11 +23,7 @@ pub fn ls_tree(args: LsTreeArgs) -> anyhow::Result<()> {
     let repository = Repository::search_and_open(&std::env::current_dir()?)?;
 
     let tree_hash = ObjectId::from_unvalidated_sh1_hex_string(&args.tree_ish)?;
-    let tree_object_path = repository.object_path_from_obj(tree_hash);
-
-    let file = File::open(&tree_object_path)?;
-
-    let mut decoder = BufReader::new(ZlibDecoder::new(&file));
+    let mut decoder = repository.object_reader(tree_hash)?;
 
     let ObjectHeader { typ, .. } = read_header(&mut decoder)?;
     if typ != ObjectType::Tree {
@@ -79,9 +71,7 @@ pub fn ls_tree(args: LsTreeArgs) -> anyhow::Result<()> {
         if args.name_only {
             println!("{}", entry.name);
         } else {
-            let object_path = repository.object_path_from_obj(entry.oid);
-            let file = File::open(object_path)?;
-            let mut decoder = BufReader::new(ZlibDecoder::new(&file));
+            let mut decoder = repository.object_reader(entry.oid)?;
 
             let mut buffer = vec![];
             decoder.read_until(b' ', &mut buffer)?;

@@ -1,16 +1,15 @@
-use std::fs;
-use std::path::{Path, PathBuf};
+use crate::database::Database;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 use thiserror::Error;
-
-use crate::database::DatabaseWriteError;
-use crate::object::{Object, ObjectBuffer};
-use crate::{database::Database, oid::ObjectId};
 
 /// Abstraction for a Git Repository
 pub struct Repository {
     pub repository_dir: PathBuf,
     pub git_dir: PathBuf,
-    database: Database,
+    pub(crate) database: Database,
 }
 
 #[derive(Copy, Clone, Error, Debug)]
@@ -56,26 +55,5 @@ impl Repository {
 
         let git_directory = repository_directory.join(".git");
         Ok(Self::open(repository_directory, git_directory))
-    }
-
-    pub fn object_path_from_obj(&self, oid: ObjectId) -> PathBuf {
-        self.database.object_path_from_oid(oid)
-    }
-
-    /// Calculate the oid of an object, write the object to the database, and return the oid
-    pub fn write_object(&self, object: &impl Object) -> Result<ObjectId, DatabaseWriteError> {
-        let buffer = object.to_buffer();
-        let oid = ObjectId::from_object_buffer(&buffer);
-        self.database.write_object_buffer(oid, &buffer)?;
-        Ok(oid)
-    }
-
-    /// Write an already in-memory object
-    pub fn write_object_buffer(
-        &self,
-        oid: ObjectId,
-        object_buffer: &ObjectBuffer,
-    ) -> Result<(), DatabaseWriteError> {
-        self.database.write_object_buffer(oid, object_buffer)
     }
 }

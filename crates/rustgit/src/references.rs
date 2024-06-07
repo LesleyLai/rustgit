@@ -23,10 +23,12 @@ pub enum ReferenceError {
     SHA1Error(#[from] SHA1ValidationError),
 }
 
+type RefResult<T> = Result<T, ReferenceError>;
+
 impl Repository {
     /// Given a name, trying to find the corresponding reference
     /// Returns None if no references exist
-    pub fn try_find_reference(&self, name: &str) -> Result<Option<Ref>, ReferenceError> {
+    pub fn try_find_reference(&self, name: &str) -> RefResult<Option<Ref>> {
         let ref_path = self.git_dir.join(name);
         let ref_content = match fs::read_to_string(ref_path) {
             Err(e) if e.kind() == ErrorKind::NotFound => return Ok(None),
@@ -43,7 +45,7 @@ impl Repository {
     }
 
     /// Given a reference, recursively try to find the underlying object id
-    pub fn peel_reference(&self, reference: &Ref) -> Result<ObjectId, ReferenceError> {
+    pub fn peel_reference(&self, reference: &Ref) -> RefResult<ObjectId> {
         match reference {
             Ref::Peeled(oid) => Ok(*oid),
             Ref::Symbolic(name) => {

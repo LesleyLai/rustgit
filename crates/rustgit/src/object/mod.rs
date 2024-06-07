@@ -13,10 +13,8 @@ pub use crate::object::{
 use crate::utils::remove_last;
 use anyhow::Context;
 use chrono::Local;
-use flate2::read::ZlibDecoder;
 use std::fmt::{Display, Formatter};
-use std::fs::File;
-use std::io::{prelude::*, BufReader};
+use std::io::prelude::*;
 
 use thiserror::Error;
 
@@ -119,7 +117,7 @@ pub struct ObjectHeader {
     pub size: usize,
 }
 
-pub fn read_header(decoder: &mut BufReader<ZlibDecoder<&File>>) -> anyhow::Result<ObjectHeader> {
+pub fn read_header(decoder: &mut impl BufRead) -> anyhow::Result<ObjectHeader> {
     let mut output = vec![];
     decoder
         .read_until(0, &mut output)
