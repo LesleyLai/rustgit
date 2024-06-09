@@ -19,8 +19,7 @@ lazy_static! {
         git(&working_dir).commit("message");
         working_dir
     };
-    static ref EXPECTED_HEAD_HASH: Sha1HashHexString =
-        git(&WORKING_DIR).rev_parse(["HEAD"]).unwrap();
+    static ref EXPECTED_HEAD_HASH: Sha1HashHexString = git(&WORKING_DIR).rev_parse(["HEAD"]);
 }
 
 // git rev-parse <sha1>

@@ -21,7 +21,7 @@ pub fn commit_tree(args: CommitTreeArgs) -> anyhow::Result<()> {
         .transpose()?;
 
     let repository = Repository::search_and_open(&std::env::current_dir()?)?;
-    let author = rustgit::object::get_author()?;
+    let author = rustgit::object::get_author();
     let commit_hash = repository.write_object(&Commit::new(
         tree_sha,
         parent_commit_sha,

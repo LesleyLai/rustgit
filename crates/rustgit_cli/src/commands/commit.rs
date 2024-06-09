@@ -27,7 +27,7 @@ pub fn commit(args: CommitArgs) -> anyhow::Result<()> {
     }?;
 
     // git commit-tree
-    let author = rustgit::object::get_author()?;
+    let author = rustgit::object::get_author();
     let commit_hash =
         repository.write_object(&Commit::new(tree_sha, parent_commit_sha, author, message))?;
 

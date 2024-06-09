@@ -1,6 +1,5 @@
 use crate::object::ObjectBuffer;
 use crate::utils::trim_whitespace;
-use anyhow::Context;
 use sha1::Digest;
 use std::fmt::{Debug, Display, Formatter};
 
@@ -83,16 +82,12 @@ impl Display for ObjectId {
 }
 
 impl Sha1HashHexString {
-    pub fn from_str(s: &str) -> anyhow::Result<Self> {
+    pub fn from_str(s: &str) -> Result<Self, SHA1ValidationError> {
         Self::from_u8_slice(s.as_bytes())
     }
-    pub fn from_u8_slice(bytes: &[u8]) -> anyhow::Result<Self> {
-        let data: [u8; 40] = trim_whitespace(bytes).try_into().with_context(|| {
-            format!(
-                "Byte slice is not a valid sha1 hash. It has a length of {}\nContent: {}",
-                bytes.len(),
-                String::from_utf8_lossy(bytes)
-            )
+    pub fn from_u8_slice(bytes: &[u8]) -> Result<Self, SHA1ValidationError> {
+        let data: [u8; 40] = trim_whitespace(bytes).try_into().map_err(|_| {
+            SHA1ValidationError::InvalidHexString(format!("{}", String::from_utf8_lossy(bytes)))
         })?;
         // TODO: validate the result
         Ok(Sha1HashHexString(data))

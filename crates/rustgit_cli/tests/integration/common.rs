@@ -71,14 +71,14 @@ impl GitCommand {
         Sha1HashHexString::from_u8_slice(&assert.get_output().stdout).unwrap()
     }
 
-    pub(crate) fn rev_parse<I, S>(mut self, args: I) -> anyhow::Result<Sha1HashHexString>
+    pub(crate) fn rev_parse<I, S>(mut self, args: I) -> Sha1HashHexString
     where
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
-        let output = self.0.arg("rev-parse").args(args).output()?;
-        anyhow::ensure!(output.status.success());
-        Sha1HashHexString::from_u8_slice(&output.stdout)
+        let output = self.0.arg("rev-parse").args(args).output().unwrap();
+        assert!(output.status.success());
+        Sha1HashHexString::from_u8_slice(&output.stdout).unwrap()
     }
 
     pub(crate) fn log(mut self) -> String {
