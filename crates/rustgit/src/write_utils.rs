@@ -1,19 +1,21 @@
+use crate::database::DatabaseWriteError;
 use crate::is_executable::IsExecutable;
 use crate::object::ObjectType;
 use crate::repository::Repository;
 use crate::{object::ObjectBuffer, oid::ObjectId};
-use anyhow::Context;
 use std::{fs, path::Path};
 
 // Recursively create a tree object and return the tree SHA
 // TODO: should write index rather than a directory
-pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<ObjectId> {
+pub fn write_tree(repository: &Repository, path: &Path) -> Result<ObjectId, DatabaseWriteError> {
     use std::io::Write;
 
     assert!(path.is_dir());
 
+    let to_database_write_error = |path| |error| DatabaseWriteError::new(path, error);
+
     let mut entries: Vec<_> = fs::read_dir(path)
-        .context("read directory in git write-tree")?
+        .map_err(to_database_write_error(path.to_path_buf()))?
         .map(|entry| entry.unwrap())
         .collect();
     // sort entries alphabetically
@@ -44,7 +46,8 @@ pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Object
                 0o100644
             };
 
-            let content = fs::read_to_string(child_path.to_str().unwrap())?;
+            let content = fs::read_to_string(child_path.to_str().unwrap())
+                .map_err(to_database_write_error(child_path.clone()))?;
             let blob = ObjectBuffer::new(ObjectType::Blob, content.as_bytes());
             let object_hash = ObjectId::from_object_buffer(&blob);
 
@@ -60,10 +63,11 @@ pub fn write_tree(repository: &Repository, path: &Path) -> anyhow::Result<Object
                 write_tree(repository, &child_path)?
             }
         } else {
-            anyhow::bail!("We don't support symlink");
+            unimplemented!("symlink");
         };
 
-        write!(&mut content, "{:o} {}\0", mode, name.to_string_lossy())?;
+        write!(&mut content, "{:o} {}\0", mode, name.to_string_lossy())
+            .map_err(to_database_write_error(child_path))?;
         content.extend_from_slice(&object_hash.0);
     }
 

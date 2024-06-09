@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::Args;
 use rustgit::index::{EntryMetadata, Index};
 use rustgit::lockfile::Lockfile;
@@ -125,5 +126,5 @@ pub fn add(args: AddArgs) -> anyhow::Result<()> {
         index.add(file_path, oid, metadata)
     }
     index.write_to(&mut index_lockfile)?;
-    index_lockfile.commit()
+    index_lockfile.commit().context("commit lockfile")
 }

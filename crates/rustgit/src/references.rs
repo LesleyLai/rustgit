@@ -1,8 +1,9 @@
+///! Contains an abstraction to git references
 use crate::oid::{ObjectId, SHA1ValidationError};
 use crate::Repository;
 use std::{fs, io::ErrorKind};
 
-// A ref is a variable that holds a single object identifier.
+/// A Ref is a variable that holds a single object identifier.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ref {
     /// A peeled reference contains an object id

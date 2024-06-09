@@ -1,8 +1,9 @@
+//! Access to `.git/index` files
+
 use crate::oid::ObjectId;
 use crate::read_ext::ReadExt;
-use anyhow::Context;
-use std::collections::BTreeMap;
 use std::{
+    collections::BTreeMap,
     fs::File,
     io,
     io::{BufRead, BufReader, ErrorKind, Read},
@@ -36,16 +37,34 @@ pub struct EntryRef<'index> {
     pub path: &'index Path,
 }
 
+/// An error raised from reading or parsing the index file
+#[derive(thiserror::Error, Debug)]
+pub enum IndexReadError {
+    #[error("IO Error")]
+    IOError(#[from] io::Error),
+
+    #[error("index header signature is not DIRC")]
+    HeaderSignatureError,
+
+    #[error("rustgit only support index version 2, get {0}")]
+    VersionError(u32),
+
+    #[error("utf8 error")]
+    UTF8Error(#[from] std::str::Utf8Error),
+}
+
 // Read header of index and return the number of entries
-fn read_header(reader: &mut impl Read) -> anyhow::Result<usize> {
+fn read_header(reader: &mut impl Read) -> Result<usize, IndexReadError> {
     let header_signature = reader.read_exact_4()?;
-    anyhow::ensure!(
-        matches!(&header_signature, b"DIRC"),
-        "index signature is not DIRC"
-    );
+    if !matches!(&header_signature, b"DIRC") {
+        return Err(IndexReadError::HeaderSignatureError);
+    }
 
     let version_number = u32::from_be_bytes(reader.read_exact_4()?);
-    anyhow::ensure!(version_number == 2, "rustgit only support index version 2");
+    if version_number != 2 {
+        return Err(IndexReadError::VersionError(version_number));
+    }
+
     let entry_count = u32::from_be_bytes(reader.read_exact_4()?);
     Ok(entry_count as usize)
 }
@@ -114,12 +133,12 @@ fn write_oid(writer: &mut impl io::Write, oid: ObjectId) -> io::Result<()> {
 }
 
 // Write path and return its length
-fn write_path(writer: &mut impl io::Write, path: &Path) -> anyhow::Result<usize> {
+fn write_path(writer: &mut impl io::Write, path: &Path) -> io::Result<usize> {
     let path_bytes = path.to_str().unwrap().as_bytes();
     let path_len = path_bytes.len();
 
     // path size
-    writer.write(&u16::to_be_bytes(u16::try_from(path_bytes.len())?))?;
+    writer.write(&u16::to_be_bytes(u16::try_from(path_bytes.len()).unwrap()))?;
     writer.write(path_bytes)?;
 
     Ok(path_len)
@@ -138,14 +157,14 @@ impl Index {
     /// Open an on-memory version of a git index from .git/index file
     ///
     /// If .git/index file doesn't exist, create an empty index
-    pub fn open(index_path: &Path) -> anyhow::Result<Self> {
+    pub fn open(index_path: &Path) -> Result<Self, IndexReadError> {
         let index_file = match File::open(index_path) {
             Err(e) if e.kind() == ErrorKind::NotFound => {
                 return Ok(Index {
                     entries: Default::default(),
                 })
             }
-            index_file => index_file.context("open .git/index file")?,
+            index_file => index_file?,
         };
         let mut entries = BTreeMap::new();
 
@@ -160,9 +179,7 @@ impl Index {
             let path_length = u16::from_be_bytes(reader.read_exact_n::<2>()?);
 
             let mut path = vec![];
-            let length = reader
-                .read_until(0, &mut path)
-                .context("failed to read header from tree object")?;
+            let length = reader.read_until(0, &mut path)?;
             assert_eq!(length, usize::from(path_length + 1));
 
             // Exclude null byte in path
@@ -193,7 +210,7 @@ impl Index {
         self.entries.insert(path, EntryData { oid, metadata });
     }
 
-    pub fn write_to(&self, file: &mut impl io::Write) -> anyhow::Result<()> {
+    pub fn write_to(&self, file: &mut impl io::Write) -> io::Result<()> {
         let entry_size = u32::try_from(self.entries.len()).unwrap();
 
         file.write(b"DIRC")?;

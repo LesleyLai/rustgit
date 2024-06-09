@@ -1,3 +1,5 @@
+//! Contains an abstraction for the git HEAD
+
 use crate::references::ReferenceError;
 use crate::{oid::ObjectId, references::Ref, Repository};
 

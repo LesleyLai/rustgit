@@ -23,6 +23,12 @@ pub struct DatabaseWriteError {
     source: std::io::Error,
 }
 
+impl DatabaseWriteError {
+    pub fn new(path: PathBuf, source: std::io::Error) -> Self {
+        DatabaseWriteError { path, source }
+    }
+}
+
 impl Database {
     pub(crate) fn open(git_dir: &Path) -> Self {
         Self {

@@ -7,7 +7,6 @@ authors = ["Lesley Lai <lesley@lesleylai.info>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.86"                                    # error handling
 sha1 = "0.10.6"                                      # hashing
 hex = "0.4.3"                                        # working with hash output
 flate2 = "1.0"                                    # gzip compression

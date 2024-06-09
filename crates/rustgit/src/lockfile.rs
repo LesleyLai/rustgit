@@ -1,4 +1,3 @@
-use anyhow::Context;
 use std::fmt::{Display, Formatter};
 use std::{fs, fs::File, io, path::Path, path::PathBuf};
 use thiserror::Error;
@@ -30,14 +29,13 @@ impl Lockfile {
     }
 
     /// Rename \<lockfile\>.lock to \<lockfile\> and release the lock
-    pub fn commit(mut self) -> anyhow::Result<()> {
+    pub fn commit(mut self) -> Result<(), LockfileError> {
         let path = self.path.clone();
         let file = self.file.take().unwrap();
         drop(file);
 
         let no_extension_path = path.with_extension("");
-        fs::rename(&path, &no_extension_path)
-            .with_context(|| format!("commit lockfile at {}", path.display()))
+        fs::rename(&path, &no_extension_path).map_err(|err| LockfileError::from_io(err, path))
     }
 }
 
