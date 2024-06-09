@@ -2,7 +2,7 @@
 
 use std::io::{Read, Result};
 
-pub trait ReadExt {
+pub(crate) trait ReadExt {
     fn read_exact_n<const N: usize>(&mut self) -> Result<[u8; N]>;
 
     fn read_exact_4(&mut self) -> Result<[u8; 4]> {

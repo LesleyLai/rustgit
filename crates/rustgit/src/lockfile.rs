@@ -29,7 +29,7 @@ impl Lockfile {
         }
     }
 
-    /// Rename <lockfile>.lock to <lockfile> and release the lock
+    /// Rename \<lockfile\>.lock to \<lockfile\> and release the lock
     pub fn commit(mut self) -> anyhow::Result<()> {
         let path = self.path.clone();
         let file = self.file.take().unwrap();

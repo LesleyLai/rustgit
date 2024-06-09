@@ -18,3 +18,7 @@ winapi = { version = "0.3.9", features = ["winbase"] }
 
 [dev-dependencies]
 test_utils = { path = "../test_utils" }
+
+[lib]
+path = "src/lib.rs"
+doc = true

@@ -9,7 +9,7 @@ use std::io::{prelude::*, Write};
 
 #[derive(Args, Debug)]
 pub struct CatFileArgs {
-    /// Pretty-print the contents of <object> based on its type
+    /// Pretty-print the contents of \<object\> based on its type
     #[clap(short = 'p')]
     pretty_print: bool,
     object_hash: String,
