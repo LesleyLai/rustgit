@@ -66,7 +66,7 @@ fn not_tree() -> anyhow::Result<()> {
         .args(["ls-tree", &file1_oid])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("not a tree object"));
+        .stderr(predicate::str::contains("expect a tree object, get a blob"));
 
     Ok(())
 }

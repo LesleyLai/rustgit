@@ -1,11 +1,5 @@
-use anyhow::Context;
 use clap::Args;
-use rustgit::{
-    object::{read_header, ObjectHeader, ObjectType, Tree, TreeEntry},
-    oid::ObjectId,
-    utils::remove_last,
-    Repository,
-};
+use rustgit::{object::read_tree_object, oid::ObjectId, Repository};
 use std::io::prelude::*;
 
 #[derive(Args, Debug)]
@@ -23,58 +17,17 @@ pub fn ls_tree(args: LsTreeArgs) -> anyhow::Result<()> {
     let repository = Repository::search_and_open(&std::env::current_dir()?)?;
 
     let tree_hash = ObjectId::from_unvalidated_sh1_hex_string(&args.tree_ish)?;
-    let mut decoder = repository.object_reader(tree_hash)?;
-
-    let ObjectHeader { typ, .. } = read_header(&mut decoder)?;
-    if typ != ObjectType::Tree {
-        anyhow::bail!("not a tree object");
-    }
-
-    let mut output = vec![];
-
-    let mut tree = Tree::new();
-    loop {
-        output.clear();
-        let n = decoder
-            .read_until(0, &mut output)
-            .context("failed to read item from tree object")?;
-        // EOF
-        if n == 0 {
-            break;
-        }
-        let output_str = std::str::from_utf8(remove_last(&output)).unwrap();
-        if output_str.is_empty() {
-            break;
-        }
-
-        let (mode, name) = output_str
-            .split_once(' ')
-            .context("corrupted file for tree object")?;
-
-        let mode = u32::from_str_radix(mode, 8)?;
-
-        // hash
-        let mut oid_buffer = [0u8; 20];
-        decoder
-            .read_exact(&mut oid_buffer)
-            .context("failed to read item hash from tree object")?;
-        let oid = ObjectId(oid_buffer);
-
-        tree.add_entry(TreeEntry {
-            name: name.to_string(),
-            oid,
-            mode,
-        })
-    }
+    let mut reader = repository.object_reader(tree_hash)?;
+    let tree = read_tree_object(&mut reader)?;
 
     for entry in tree.iter() {
         if args.name_only {
             println!("{}", entry.name);
         } else {
-            let mut decoder = repository.object_reader(entry.oid)?;
+            let mut reader = repository.object_reader(entry.oid)?;
 
             let mut buffer = vec![];
-            decoder.read_until(b' ', &mut buffer)?;
+            reader.read_until(b' ', &mut buffer)?;
 
             let typ = std::str::from_utf8(&buffer[0..buffer.len() - 1])?;
             assert!(typ == "blob" || typ == "tree");

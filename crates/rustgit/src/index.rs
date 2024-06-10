@@ -157,6 +157,8 @@ impl Index {
     /// Open an on-memory version of a git index from .git/index file
     ///
     /// If .git/index file doesn't exist, create an empty index
+    ///
+    /// TODO: very error prone API, make it private and have something else
     pub fn open(index_path: &Path) -> Result<Self, IndexReadError> {
         let index_file = match File::open(index_path) {
             Err(e) if e.kind() == ErrorKind::NotFound => {

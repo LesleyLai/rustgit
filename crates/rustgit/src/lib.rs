@@ -16,5 +16,7 @@ mod database;
 pub mod index;
 mod is_executable;
 pub mod lockfile;
+mod object_reader;
+mod parse_utils;
 mod read_ext;
 pub mod write_utils;

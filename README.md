@@ -17,15 +17,15 @@ The objective is to develop something that can seamlessly substitute normal Git 
 
 **Plumbing Commands**
 
-| Command       | Note & Limitations                                                                |
-|---------------|-----------------------------------------------------------------------------------|
-| `cat-file`    | currently only supports `-p`                                                      |
-| `hash-object` |                                                                                   |
-| `ls-tree`     |                                                                                   |
-| `ls-files`    |                                                                                   |
-| `write-tree`  | currently just write the whole folder without consider what's in the stage buffer |
-| `commit-tree` |                                                                                   |
-| `rev-parse`   | currently only work with `HEAD`                                                   |
+| Command       | Note & Limitations              |
+|---------------|---------------------------------|
+| `cat-file`    | currently only supports `-p`    |
+| `hash-object` |                                 |
+| `ls-tree`     |                                 |
+| `ls-files`    |                                 |
+| `write-tree`  |                                 |
+| `commit-tree` |                                 |
+| `rev-parse`   | currently only work with `HEAD` |
 
 ## References
 

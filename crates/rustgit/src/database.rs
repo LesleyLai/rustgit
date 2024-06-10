@@ -1,10 +1,12 @@
 // Object Database at .git/objects
 // Also including an in-memory cache
 
-use crate::object::Object;
-use crate::{object::ObjectBuffer, oid::ObjectId, Repository};
-use flate2::read::ZlibDecoder;
-use std::io::{BufRead, BufReader};
+use crate::{
+    object::{Object, ObjectBuffer},
+    object_reader::ObjectReader,
+    oid::ObjectId,
+    Repository,
+};
 use std::{
     fs,
     fs::File,
@@ -49,13 +51,13 @@ impl Database {
     }
 
     /// Given an object id, give back an object reader for the object on disk
-    pub(crate) fn object_reader(&self, oid: ObjectId) -> std::io::Result<impl BufRead> {
+    pub(crate) fn object_reader(&self, oid: ObjectId) -> std::io::Result<ObjectReader> {
         let file = fs::OpenOptions::new()
             .read(true)
             .create(false)
             .open(self.object_path_from_oid(oid))?;
 
-        Ok(BufReader::new(ZlibDecoder::new(file)))
+        Ok(ObjectReader::from_file(file))
     }
 
     // Write an already in-memory object
@@ -102,7 +104,7 @@ impl Database {
 }
 
 impl Repository {
-    pub fn object_reader(&self, oid: ObjectId) -> std::io::Result<impl BufRead> {
+    pub fn object_reader(&self, oid: ObjectId) -> std::io::Result<ObjectReader> {
         self.database.object_reader(oid)
     }
 

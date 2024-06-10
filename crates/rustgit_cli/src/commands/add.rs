@@ -67,7 +67,7 @@ fn get_metadata(path: &Path) -> anyhow::Result<EntryMetadata> {
         mtime_nanoseconds: metadata.mtime_nsec() as u32,
         dev: metadata.dev() as u32,
         ino: metadata.ino() as u32,
-        mode: metadata.mode(), // TODO
+        mode: metadata.mode(),
         uid: metadata.uid(),
         gid: metadata.gid(),
         file_size: metadata.size() as u32,
