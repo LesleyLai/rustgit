@@ -14,6 +14,10 @@ impl Lockfile {
     /// * `path` - A path without the .lock extension
     pub fn new(path: &Path) -> Result<Lockfile, LockfileError> {
         let lock_path = path.with_extension("lock");
+
+        // makes sure that the parent folder exist
+        fs::create_dir_all(lock_path.parent().unwrap()).unwrap();
+
         let maybe_file = File::options()
             .read(true)
             .write(true)

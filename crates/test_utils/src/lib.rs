@@ -9,7 +9,7 @@ lazy_static! {
         let temp_dir = std::env::temp_dir();
         let dir = temp_dir.join("rustgit_tests");
 
-        fs::remove_dir_all(&dir).expect("Failed to clear the test directory");
+        let _ = fs::remove_dir_all(&dir);
         fs::create_dir(&dir).unwrap();
         dir
     };
